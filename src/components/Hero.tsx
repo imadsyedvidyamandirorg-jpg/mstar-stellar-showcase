@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ArrowRight, Star, Smartphone, Headphones, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import mstarLogo from "@/assets/mstar-logo.png";
@@ -33,13 +34,17 @@ const Hero = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button variant="accent" size="xl">
-                Explore Products
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button variant="outline" size="xl" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
-                Contact Us
-              </Button>
+              <Link to="/dashboard/store">
+                <Button variant="accent" size="xl">
+                  Explore Products
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/dashboard">
+                <Button variant="outline" size="xl" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
+                  Go to Dashboard
+                </Button>
+              </Link>
             </div>
 
             {/* Stats */}

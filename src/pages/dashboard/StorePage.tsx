@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShoppingCart, Heart, Star, Search, Filter, Grid3X3, List } from "lucide-react";
+import { ShoppingCart, Heart, Star, Search, Grid3X3, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,8 @@ const StorePage = () => {
   const { toast } = useToast();
 
   const categories = [
-    { id: "all", name: "All Products" },
-    { id: "smartphones", name: "Smartphones" },
+    { id: "all", name: "All" },
+    { id: "smartphones", name: "Phones" },
     { id: "accessories", name: "Accessories" },
     { id: "electronics", name: "Electronics" },
   ];
@@ -41,38 +41,38 @@ const StorePage = () => {
     });
     toast({
       title: "Added to Cart!",
-      description: `${product.name} has been added to your cart.`,
+      description: `${product.name} has been added.`,
     });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Online Store</h1>
-          <p className="text-muted-foreground">{filteredProducts.length} products available</p>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Online Store</h1>
+          <p className="text-sm text-muted-foreground">{filteredProducts.length} products</p>
         </div>
 
         {/* Search */}
-        <div className="relative w-full md:w-80">
+        <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10"
           />
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
         {categories.map((category) => (
           <button
             key={category.id}
             onClick={() => setSelectedCategory(category.id)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
               selectedCategory === category.id
                 ? "bg-accent text-accent-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -82,18 +82,18 @@ const StorePage = () => {
           </button>
         ))}
         <div className="flex-1" />
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+        <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
           <button
             onClick={() => setViewMode("grid")}
-            className={`p-2 rounded ${viewMode === "grid" ? "bg-background shadow-sm" : ""}`}
+            className={`p-1.5 rounded ${viewMode === "grid" ? "bg-background shadow-sm" : ""}`}
           >
             <Grid3X3 className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode("list")}
-            className={`p-2 rounded ${viewMode === "list" ? "bg-background shadow-sm" : ""}`}
+            className={`p-1.5 rounded ${viewMode === "list" ? "bg-background shadow-sm" : ""}`}
           >
-            <List className="h-4 w-4" />
+            <LayoutList className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -102,15 +102,15 @@ const StorePage = () => {
       <div
         className={
           viewMode === "grid"
-            ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            : "space-y-4"
+            ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
+            : "space-y-3"
         }
       >
         {filteredProducts.map((product) =>
           viewMode === "grid" ? (
             <div
               key={product.id}
-              className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-deep transition-all"
+              className="group bg-card rounded-xl md:rounded-2xl overflow-hidden shadow-elegant hover:shadow-deep transition-all"
             >
               {/* Image */}
               <div className="relative aspect-square bg-muted overflow-hidden">
@@ -120,41 +120,39 @@ const StorePage = () => {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 {product.badge && (
-                  <Badge className={`absolute top-3 left-3 ${product.badgeColor} text-white`}>
+                  <Badge className={`absolute top-2 left-2 text-[10px] md:text-xs ${product.badgeColor} text-white`}>
                     {product.badge}
                   </Badge>
                 )}
-                <button className="absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
-                  <Heart className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" />
+                <button className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Heart className="h-4 w-4 text-muted-foreground hover:text-accent transition-colors" />
                 </button>
               </div>
 
               {/* Content */}
-              <div className="p-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+              <div className="p-3 md:p-4">
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider mb-0.5">
                   {product.brand}
                 </p>
-                <h3 className="font-semibold text-foreground mb-2 line-clamp-2 min-h-[3rem]">
+                <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[3rem]">
                   {product.name}
                 </h3>
 
                 {/* Rating */}
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 text-mstar-gold fill-mstar-gold" />
-                    <span className="text-sm font-medium text-foreground">{product.rating}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 mt-1 md:mt-2 mb-2">
+                  <Star className="h-3 w-3 text-mstar-gold fill-mstar-gold" />
+                  <span className="text-xs font-medium text-foreground">{product.rating}</span>
+                  <span className="text-[10px] text-muted-foreground">
                     ({product.reviews.toLocaleString()})
                   </span>
                 </div>
 
                 {/* Price */}
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg font-bold text-foreground">
+                <div className="flex items-center gap-1 md:gap-2 mb-2 md:mb-3">
+                  <span className="text-sm md:text-lg font-bold text-foreground">
                     {formatPrice(product.price)}
                   </span>
-                  <span className="text-sm text-muted-foreground line-through">
+                  <span className="text-[10px] md:text-sm text-muted-foreground line-through">
                     {formatPrice(product.originalPrice)}
                   </span>
                 </div>
@@ -162,10 +160,10 @@ const StorePage = () => {
                 {/* Add to Cart */}
                 <Button
                   variant="default"
-                  className="w-full"
+                  className="w-full h-9 md:h-10 text-xs md:text-sm"
                   onClick={() => handleAddToCart(product)}
                 >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  <ShoppingCart className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5" />
                   Add to Cart
                 </Button>
               </div>
@@ -173,36 +171,36 @@ const StorePage = () => {
           ) : (
             <div
               key={product.id}
-              className="bg-card rounded-2xl p-4 shadow-elegant flex gap-4"
+              className="bg-card rounded-xl p-3 shadow-elegant flex gap-3"
             >
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-xl flex-shrink-0"
+                className="w-20 h-20 md:w-28 md:h-28 object-cover rounded-lg flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase">{product.brand}</p>
-                    <h3 className="font-semibold text-foreground">{product.name}</h3>
-                    <div className="flex items-center gap-1 mt-1">
+                    <p className="text-[10px] md:text-xs text-muted-foreground uppercase">{product.brand}</p>
+                    <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-1">{product.name}</h3>
+                    <div className="flex items-center gap-1 mt-0.5">
                       <Star className="h-3 w-3 text-mstar-gold fill-mstar-gold" />
-                      <span className="text-xs">{product.rating}</span>
+                      <span className="text-[10px] md:text-xs">{product.rating}</span>
                     </div>
                   </div>
                   {product.badge && (
-                    <Badge className={`${product.badgeColor} text-white`}>{product.badge}</Badge>
+                    <Badge className={`${product.badgeColor} text-white text-[10px]`}>{product.badge}</Badge>
                   )}
                 </div>
-                <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center justify-between mt-2">
                   <div>
-                    <span className="font-bold text-foreground">{formatPrice(product.price)}</span>
-                    <span className="text-sm text-muted-foreground line-through ml-2">
+                    <span className="font-bold text-foreground text-sm md:text-base">{formatPrice(product.price)}</span>
+                    <span className="text-[10px] md:text-sm text-muted-foreground line-through ml-1">
                       {formatPrice(product.originalPrice)}
                     </span>
                   </div>
-                  <Button size="sm" onClick={() => handleAddToCart(product)}>
-                    <ShoppingCart className="h-4 w-4 mr-1" />
+                  <Button size="sm" className="h-8 text-xs" onClick={() => handleAddToCart(product)}>
+                    <ShoppingCart className="h-3.5 w-3.5 mr-1" />
                     Add
                   </Button>
                 </div>
@@ -214,10 +212,10 @@ const StorePage = () => {
 
       {/* Empty State */}
       {filteredProducts.length === 0 && (
-        <div className="bg-card rounded-2xl p-12 text-center">
-          <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No Products Found</h3>
-          <p className="text-muted-foreground">Try adjusting your search or filters.</p>
+        <div className="bg-card rounded-2xl p-8 md:p-12 text-center">
+          <Search className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-base md:text-lg font-semibold text-foreground mb-2">No Products Found</h3>
+          <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
         </div>
       )}
     </div>

@@ -18,18 +18,18 @@ const CartPage = () => {
       setDiscount(totalPrice * 0.3);
       toast({
         title: "Coupon Applied!",
-        description: "You got 30% off on your order.",
+        description: "You got 30% off!",
       });
     } else if (couponCode.toUpperCase() === "STUDENT10") {
       setDiscount(totalPrice * 0.1);
       toast({
         title: "Coupon Applied!",
-        description: "You got 10% student discount.",
+        description: "You got 10% off!",
       });
     } else {
       toast({
         title: "Invalid Coupon",
-        description: "Please enter a valid coupon code.",
+        description: "Please enter a valid code.",
         variant: "destructive",
       });
     }
@@ -40,7 +40,7 @@ const CartPage = () => {
   const handleCheckout = () => {
     toast({
       title: "Order Placed! 🎉",
-      description: "Thank you for shopping with MStar Mobile. We'll contact you shortly.",
+      description: "We'll contact you shortly.",
     });
     clearCart();
     setDiscount(0);
@@ -49,16 +49,16 @@ const CartPage = () => {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
-        <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6">
-          <ShoppingCart className="h-12 w-12 text-muted-foreground" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+        <div className="w-20 h-20 md:w-24 md:h-24 bg-muted rounded-full flex items-center justify-center mb-4 md:mb-6">
+          <ShoppingCart className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">Your Cart is Empty</h1>
-        <p className="text-muted-foreground mb-6">
-          Looks like you haven't added anything to your cart yet.
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-2">Your Cart is Empty</h1>
+        <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6">
+          Start shopping to add items!
         </p>
         <Link to="/dashboard/store">
-          <Button variant="accent" size="lg">
+          <Button variant="accent" size="lg" className="h-11 md:h-12">
             <ShoppingBag className="h-5 w-5 mr-2" />
             Start Shopping
           </Button>
@@ -68,68 +68,68 @@ const CartPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Shopping Cart</h1>
-          <p className="text-muted-foreground">{totalItems} items in your cart</p>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Cart</h1>
+          <p className="text-sm text-muted-foreground">{totalItems} items</p>
         </div>
-        <Button variant="outline" size="sm" onClick={clearCart}>
-          <Trash2 className="h-4 w-4 mr-2" />
-          Clear Cart
+        <Button variant="outline" size="sm" onClick={clearCart} className="text-xs md:text-sm">
+          <Trash2 className="h-4 w-4 mr-1 md:mr-2" />
+          Clear
         </Button>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-4 md:gap-8">
         {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-3">
           {items.map((item) => (
             <div
               key={item.id}
-              className="bg-card rounded-2xl p-4 shadow-elegant flex gap-4"
+              className="bg-card rounded-xl p-3 md:p-4 shadow-elegant flex gap-3"
             >
               <img
                 src={item.image}
                 alt={item.name}
-                className="w-24 h-24 object-cover rounded-xl flex-shrink-0"
+                className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-lg flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase">{item.brand}</p>
-                    <h3 className="font-semibold text-foreground">{item.name}</h3>
+                    <p className="text-[10px] md:text-xs text-muted-foreground uppercase">{item.brand}</p>
+                    <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-1">{item.name}</h3>
                   </div>
                   <button
                     onClick={() => removeFromCart(item.id)}
-                    className="text-muted-foreground hover:text-destructive transition-colors"
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
                   >
-                    <Trash2 className="h-5 w-5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center justify-between mt-2 md:mt-3">
                   {/* Quantity */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 md:gap-2">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                      className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-3 w-3 md:h-4 md:w-4" />
                     </button>
-                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                    <span className="w-6 md:w-8 text-center font-medium text-sm">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                      className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3 w-3 md:h-4 md:w-4" />
                     </button>
                   </div>
 
                   {/* Price */}
                   <div className="text-right">
-                    <p className="font-bold text-foreground">{formatPrice(item.price * item.quantity)}</p>
-                    <p className="text-xs text-muted-foreground">{formatPrice(item.price)} each</p>
+                    <p className="font-bold text-foreground text-sm md:text-base">{formatPrice(item.price * item.quantity)}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground">{formatPrice(item.price)} each</p>
                   </div>
                 </div>
               </div>
@@ -138,7 +138,7 @@ const CartPage = () => {
 
           <Link
             to="/dashboard/store"
-            className="inline-flex items-center gap-2 text-accent hover:underline"
+            className="inline-flex items-center gap-2 text-accent hover:underline text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
             Continue Shopping
@@ -147,27 +147,28 @@ const CartPage = () => {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-card rounded-2xl p-6 shadow-elegant sticky top-24">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Order Summary</h2>
+          <div className="bg-card rounded-xl md:rounded-2xl p-4 md:p-6 shadow-elegant sticky top-20">
+            <h2 className="text-base md:text-lg font-semibold text-foreground mb-3 md:mb-4">Order Summary</h2>
 
             {/* Coupon */}
-            <div className="mb-6">
-              <label className="text-sm text-muted-foreground mb-2 block">Coupon Code</label>
+            <div className="mb-4 md:mb-6">
+              <label className="text-xs md:text-sm text-muted-foreground mb-2 block">Coupon Code</label>
               <div className="flex gap-2">
                 <Input
                   placeholder="Enter code"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
+                  className="h-9 md:h-10 text-sm"
                 />
-                <Button variant="outline" onClick={applyCoupon}>
+                <Button variant="outline" onClick={applyCoupon} className="h-9 md:h-10 px-3">
                   <Tag className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Try: WEEKEND30 or STUDENT10</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Try: WEEKEND30</p>
             </div>
 
             {/* Totals */}
-            <div className="space-y-3 py-4 border-t border-border">
+            <div className="space-y-2 py-3 md:py-4 border-t border-border text-sm">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
                 <span>{formatPrice(totalPrice)}</span>
@@ -184,22 +185,21 @@ const CartPage = () => {
               </div>
             </div>
 
-            <div className="flex justify-between py-4 border-t border-border">
-              <span className="text-lg font-semibold text-foreground">Total</span>
-              <span className="text-lg font-bold text-foreground">{formatPrice(finalTotal)}</span>
+            <div className="flex justify-between py-3 md:py-4 border-t border-border">
+              <span className="text-base md:text-lg font-semibold text-foreground">Total</span>
+              <span className="text-base md:text-lg font-bold text-foreground">{formatPrice(finalTotal)}</span>
             </div>
 
             <Button
               variant="accent"
-              className="w-full"
-              size="lg"
+              className="w-full h-11 md:h-12"
               onClick={handleCheckout}
             >
-              <CreditCard className="h-5 w-5 mr-2" />
+              <CreditCard className="h-4 w-4 md:h-5 md:w-5 mr-2" />
               Checkout
             </Button>
 
-            <p className="text-xs text-muted-foreground text-center mt-4">
+            <p className="text-[10px] md:text-xs text-muted-foreground text-center mt-3 md:mt-4">
               Free delivery on orders above ₹5,000
             </p>
           </div>

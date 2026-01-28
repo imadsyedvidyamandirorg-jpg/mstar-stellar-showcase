@@ -5,6 +5,7 @@ import OnlineStore from "@/components/OnlineStore";
 import ReelsSection from "@/components/ReelsSection";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
+import ContactButton from "@/components/ContactButton";
 
 const Index = () => {
   return (
@@ -16,6 +17,7 @@ const Index = () => {
       <ReelsSection />
       <Contact />
       <Footer />
+      <ContactButton />
     </div>
   );
 };

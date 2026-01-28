@@ -34,17 +34,17 @@ const Hero = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link to="/dashboard/store">
+              <Link to="/dashboard">
                 <Button variant="accent" size="xl">
-                  Explore Products
+                  Explore Dashboard
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/dashboard">
-                <Button variant="outline" size="xl" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
-                  Go to Dashboard
+              <a href="#contact">
+                <Button size="xl" className="bg-white text-mstar-black hover:bg-white/90 font-semibold">
+                  Contact Us
                 </Button>
-              </Link>
+              </a>
             </div>
 
             {/* Stats */}

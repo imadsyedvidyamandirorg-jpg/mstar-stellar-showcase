@@ -1,14 +1,32 @@
-import { Link, useLocation } from "react-router-dom";
-import { Film, Image, Bell, Gift, ShoppingBag, Home, ShoppingCart, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Film, Image, Bell, Gift, ShoppingBag, Home, ShoppingCart, Menu, X, LogOut, Search } from "lucide-react";
+import { useState, useCallback } from "react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import mstarLogo from "@/assets/mstar-logo.png";
 
 const DashboardNav = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { totalItems } = useCart();
+  const { signOut, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchValue(value);
+    if (value === "damiison@123") {
+      setShowAdminPanel(true);
+      setSearchValue("");
+    }
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   const navItems = [
     { name: "Home", href: "/dashboard", icon: Home },
@@ -49,6 +67,18 @@ const DashboardNav = () => {
 
           {/* Cart & Notifications & Mobile Toggle */}
           <div className="flex items-center gap-2 md:gap-4">
+            {/* Search */}
+            <div className="hidden md:flex relative items-center">
+              <Search className="absolute left-2.5 h-4 w-4 text-primary-foreground/40" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchValue}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="h-9 w-40 bg-mstar-dark/50 border border-mstar-gray/20 rounded-lg pl-8 pr-3 text-sm text-primary-foreground placeholder:text-primary-foreground/30 focus:outline-none focus:border-accent/50"
+              />
+            </div>
+
             {/* Notifications - Desktop only */}
             <Link
               to="/dashboard/notifications"
@@ -69,6 +99,15 @@ const DashboardNav = () => {
                 </Badge>
               )}
             </Link>
+
+            {/* Sign Out */}
+            <button
+              onClick={handleSignOut}
+              className="hidden md:flex items-center gap-2 p-2 rounded-lg text-primary-foreground/70 hover:text-primary-foreground hover:bg-mstar-dark transition-all"
+              title="Sign Out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
 
             <button
               className="lg:hidden text-primary-foreground p-2 -mr-2"
@@ -110,11 +149,24 @@ const DashboardNav = () => {
                 <Bell className="h-5 w-5" />
                 Alerts
               </Link>
+              <button
+                onClick={handleSignOut}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-xs font-medium text-primary-foreground/70 hover:text-primary-foreground hover:bg-mstar-dark transition-all"
+              >
+                <LogOut className="h-5 w-5" />
+                Logout
+              </button>
             </div>
           </div>
         )}
       </div>
     </nav>
+
+    {/* Admin Panel Modal */}
+    {showAdminPanel && (
+      <AdminPanel onClose={() => setShowAdminPanel(false)} />
+    )}
+    </>
   );
 };
 

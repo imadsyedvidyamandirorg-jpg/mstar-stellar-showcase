@@ -5,6 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import mstarLogo from "@/assets/mstar-logo.png";
+import AdminPanel from "@/components/AdminPanel";
 
 const DashboardNav = () => {
   const location = useLocation();

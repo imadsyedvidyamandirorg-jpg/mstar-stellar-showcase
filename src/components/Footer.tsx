@@ -106,7 +106,7 @@ const Footer = () => {
             © 2024 MStar Mobile. All rights reserved.
           </p>
           <p className="text-primary-foreground/50 text-xs md:text-sm flex items-center gap-1">
-            Made with <Heart className="h-3 w-3 md:h-4 md:w-4 text-accent fill-accent" /> in Palanpur
+            Powered by <span className="text-accent font-semibold">Dami AI</span>
           </p>
         </div>
       </div>

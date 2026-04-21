@@ -1,18 +1,36 @@
-import { useState } from "react";
-import { ShoppingCart, Heart, Star, Search, Grid3X3, LayoutList } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShoppingCart, Heart, Star, Search, Grid3X3, LayoutList, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/contexts/CartContext";
-import { products, formatPrice } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(price);
 
 const StorePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      setProducts(data || []);
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
 
   const categories = [
     { id: "all", name: "All" },
@@ -23,21 +41,21 @@ const StorePage = () => {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
       selectedCategory === "all" || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const handleAddToCart = (product: typeof products[0]) => {
+  const handleAddToCart = (product: any) => {
     addToCart({
       id: product.id,
       name: product.name,
-      brand: product.brand,
+      brand: product.brand || "",
       price: product.price,
-      originalPrice: product.originalPrice,
-      image: product.image,
+      originalPrice: product.original_price || product.price,
+      image: product.images?.[0] || "/placeholder.svg",
     });
     toast({
       title: "Added to Cart!",
@@ -98,8 +116,14 @@ const StorePage = () => {
         </div>
       </div>
 
+      {loading && (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        </div>
+      )}
+
       {/* Products Grid */}
-      <div
+      {!loading && <div
         className={
           viewMode === "grid"
             ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"
@@ -115,12 +139,12 @@ const StorePage = () => {
               {/* Image */}
               <div className="relative aspect-square bg-muted overflow-hidden">
                 <img
-                  src={product.image}
-                  alt={product.name}
+                    src={product.images?.[0] || "/placeholder.svg"}
+                    alt={product.name || ""}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 {product.badge && (
-                  <Badge className={`absolute top-2 left-2 text-[10px] md:text-xs ${product.badgeColor} text-white`}>
+                  <Badge className={`absolute top-2 left-2 text-[10px] md:text-xs ${product.badge_color || "bg-accent"} text-white`}>
                     {product.badge}
                   </Badge>
                 )}
@@ -134,27 +158,27 @@ const StorePage = () => {
                 <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider mb-0.5">
                   {product.brand}
                 </p>
-                <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-2 min-h-[2.5rem] md:min-h-[3rem]">
+                <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-2 min-h-[2.5rem]">
                   {product.name}
                 </h3>
 
                 {/* Rating */}
-                <div className="flex items-center gap-1 mt-1 md:mt-2 mb-2">
-                  <Star className="h-3 w-3 text-mstar-gold fill-mstar-gold" />
-                  <span className="text-xs font-medium text-foreground">{product.rating}</span>
-                  <span className="text-[10px] text-muted-foreground">
-                    ({product.reviews.toLocaleString()})
-                  </span>
-                </div>
+                {product.stock !== undefined && (
+                  <p className={`text-xs mt-1 ${product.stock > 0 ? "text-green-600" : "text-destructive font-medium"}`}>
+                    {product.stock > 0 ? `In Stock (${product.stock})` : "Out of Stock"}
+                  </p>
+                )}
 
                 {/* Price */}
                 <div className="flex items-center gap-1 md:gap-2 mb-2 md:mb-3">
                   <span className="text-sm md:text-lg font-bold text-foreground">
                     {formatPrice(product.price)}
                   </span>
-                  <span className="text-[10px] md:text-sm text-muted-foreground line-through">
-                    {formatPrice(product.originalPrice)}
-                  </span>
+                  {product.original_price && product.original_price > product.price && (
+                    <span className="text-[10px] md:text-sm text-muted-foreground line-through">
+                      {formatPrice(product.original_price)}
+                    </span>
+                  )}
                 </div>
 
                 {/* Add to Cart */}
@@ -162,9 +186,10 @@ const StorePage = () => {
                   variant="default"
                   className="w-full h-9 md:h-10 text-xs md:text-sm"
                   onClick={() => handleAddToCart(product)}
+                  disabled={product.stock === 0}
                 >
                   <ShoppingCart className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5" />
-                  Add to Cart
+                  {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
                 </Button>
               </div>
             </div>
@@ -174,8 +199,8 @@ const StorePage = () => {
               className="bg-card rounded-xl p-3 shadow-elegant flex gap-3"
             >
               <img
-                src={product.image}
-                alt={product.name}
+                src={product.images?.[0] || "/placeholder.svg"}
+                alt={product.name || ""}
                 className="w-20 h-20 md:w-28 md:h-28 object-cover rounded-lg flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
@@ -184,31 +209,36 @@ const StorePage = () => {
                     <p className="text-[10px] md:text-xs text-muted-foreground uppercase">{product.brand}</p>
                     <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-1">{product.name}</h3>
                     <div className="flex items-center gap-1 mt-0.5">
-                      <Star className="h-3 w-3 text-mstar-gold fill-mstar-gold" />
-                      <span className="text-[10px] md:text-xs">{product.rating}</span>
+                      {product.stock !== undefined && (
+                        <span className={`text-[10px] ${product.stock > 0 ? "text-green-600" : "text-destructive"}`}>
+                          {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  {product.badge && (
-                    <Badge className={`${product.badgeColor} text-white text-[10px]`}>{product.badge}</Badge>
+                  {product.badge && product.badge_color && (
+                    <Badge className={`${product.badge_color} text-white text-[10px]`}>{product.badge}</Badge>
                   )}
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <div>
                     <span className="font-bold text-foreground text-sm md:text-base">{formatPrice(product.price)}</span>
-                    <span className="text-[10px] md:text-sm text-muted-foreground line-through ml-1">
-                      {formatPrice(product.originalPrice)}
-                    </span>
+                    {product.original_price && product.original_price > product.price && (
+                      <span className="text-[10px] md:text-sm text-muted-foreground line-through ml-1">
+                        {formatPrice(product.original_price)}
+                      </span>
+                    )}
                   </div>
-                  <Button size="sm" className="h-8 text-xs" onClick={() => handleAddToCart(product)}>
+                  <Button size="sm" className="h-8 text-xs" onClick={() => handleAddToCart(product)} disabled={product.stock === 0}>
                     <ShoppingCart className="h-3.5 w-3.5 mr-1" />
-                    Add
+                    {product.stock === 0 ? "Out of Stock" : "Add"}
                   </Button>
                 </div>
               </div>
             </div>
           )
         )}
-      </div>
+      </div>}
 
       {/* Empty State */}
       {filteredProducts.length === 0 && (

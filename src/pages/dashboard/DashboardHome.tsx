@@ -1,10 +1,29 @@
 import { Link } from "react-router-dom";
-import { Film, Image, Bell, Gift, ShoppingBag, ArrowRight, TrendingUp, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Film, Image, Bell, Gift, ShoppingBag, ArrowRight, TrendingUp, Star, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { products, formatPrice } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
+
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(price);
 
 const DashboardHome = () => {
-  const featuredProducts = products.slice(0, 4);
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(4);
+      setFeaturedProducts(data || []);
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
 
   const quickLinks = [
     { name: "Reels", icon: Film, href: "/dashboard/reels", color: "bg-pink-500" },
@@ -66,29 +85,41 @@ const DashboardHome = () => {
             View All
           </Link>
         </div>
-        
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {featuredProducts.map((product) => (
-            <div key={product.id} className="bg-card rounded-xl md:rounded-2xl overflow-hidden shadow-elegant group">
-              <div className="aspect-square bg-muted overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-              </div>
-              <div className="p-3 md:p-4">
-                <p className="text-[10px] md:text-xs text-muted-foreground uppercase">{product.brand}</p>
-                <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-1">{product.name}</h3>
-                <div className="flex items-center gap-1 mt-1">
-                  <Star className="h-3 w-3 text-mstar-gold fill-mstar-gold" />
-                  <span className="text-[10px] md:text-xs text-muted-foreground">{product.rating}</span>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-accent" />
+          </div>
+        ) : featuredProducts.length === 0 ? (
+          <div className="bg-card rounded-xl p-8 text-center">
+            <ShoppingBag className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground text-sm">No products yet. Add products from admin panel.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {featuredProducts.map((product) => (
+              <div key={product.id} className="bg-card rounded-xl md:rounded-2xl overflow-hidden shadow-elegant group">
+                <div className="aspect-square bg-muted overflow-hidden">
+                  <img
+                    src={product.images?.[0] || "/placeholder.svg"}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
                 </div>
-                <p className="font-bold text-foreground text-sm md:text-base mt-1 md:mt-2">{formatPrice(product.price)}</p>
+                <div className="p-3 md:p-4">
+                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase">{product.brand}</p>
+                  <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-1">{product.name}</h3>
+                  {product.stock !== undefined && (
+                    <p className={`text-[10px] mt-1 ${product.stock > 0 ? "text-green-600" : "text-destructive"}`}>
+                      {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                    </p>
+                  )}
+                  <p className="font-bold text-foreground text-sm md:text-base mt-1 md:mt-2">{formatPrice(product.price)}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

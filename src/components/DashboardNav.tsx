@@ -39,6 +39,7 @@ const DashboardNav = () => {
   const isActive = (href: string) => location.pathname === href;
 
   return (
+    <>
     <nav className="sticky top-0 z-50 hero-gradient border-b border-mstar-gray/20">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 md:h-16">

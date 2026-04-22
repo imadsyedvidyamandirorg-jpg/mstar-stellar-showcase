@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, FileText, Users } from "lucide-react";
+import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "products" | "orders" | "reels" | "posts" | "offers";
+type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "notifications" | "alerts" | "analytics";
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -21,34 +22,37 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
     { id: "reels" as Tab, label: "Reels", icon: Film },
     { id: "posts" as Tab, label: "Posts", icon: Image },
     { id: "offers" as Tab, label: "Offers", icon: Gift },
+    { id: "notifications" as Tab, label: "Push Alerts", icon: Bell },
+    { id: "alerts" as Tab, label: "Order Alerts", icon: Volume2 },
+    { id: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-card w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-deep overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 md:p-4">
+      <div className="bg-card w-full max-w-6xl max-h-[95vh] rounded-2xl shadow-deep overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between p-4 md:p-5 border-b border-border bg-gradient-to-r from-accent/5 to-transparent">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
-              <Users className="h-5 w-5 text-accent-foreground" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-accent rounded-xl flex items-center justify-center">
+              <Users className="h-5 w-5 md:h-6 md:w-6 text-accent-foreground" />
             </div>
             <div>
-              <h2 className="font-bold text-foreground">Admin Panel</h2>
-              <p className="text-xs text-muted-foreground">Manage your shop</p>
+              <h2 className="font-bold text-foreground text-base md:text-lg">Admin Panel</h2>
+              <p className="text-xs text-muted-foreground">MStar Mobile Management</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border overflow-x-auto">
+        <div className="flex border-b border-border overflow-x-auto bg-muted/30">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 md:px-4 py-3 text-xs md:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-accent text-accent"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -61,12 +65,15 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
           {activeTab === "products" && <ProductsManager />}
           {activeTab === "orders" && <OrdersManager />}
           {activeTab === "reels" && <ReelsManager />}
           {activeTab === "posts" && <PostsManager />}
           {activeTab === "offers" && <OffersManager />}
+          {activeTab === "notifications" && <NotificationsManager />}
+          {activeTab === "alerts" && <OrderAlertsManager />}
+          {activeTab === "analytics" && <AnalyticsDashboard />}
         </div>
       </div>
     </div>

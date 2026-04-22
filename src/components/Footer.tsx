@@ -103,7 +103,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-mstar-gray/20 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-primary-foreground/50 text-xs md:text-sm text-center md:text-left">
-            © 2024 MStar Mobile. All rights reserved.
+             © 2026 MStar Mobile. All rights reserved.
           </p>
           <p className="text-primary-foreground/50 text-xs md:text-sm flex items-center gap-1">
             Powered by <span className="text-accent font-semibold">Dami AI</span>

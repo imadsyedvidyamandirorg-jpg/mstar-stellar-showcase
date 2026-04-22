@@ -11,6 +11,7 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -34,6 +35,20 @@ const AuthPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (isForgotPassword) {
+      const { error } = await supabase.auth.resetPasswordForEmail(form.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Check your email", description: "We've sent you a password reset link." });
+        setIsForgotPassword(false);
+      }
+      setLoading(false);
+      return;
+    }
 
     if (isLogin) {
       const { error } = await signIn(form.email, form.password);
@@ -74,16 +89,16 @@ const AuthPage = () => {
         <div className="text-center mb-8">
           <img src={mstarLogo} alt="MStar Mobile" className="h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-primary-foreground">
-            {isLogin ? "Welcome Back" : "Create Account"}
+            {isForgotPassword ? "Reset Password" : isLogin ? "Welcome Back" : "Create Account"}
           </h1>
           <p className="text-primary-foreground/60 text-sm mt-1">
-            {isLogin ? "Sign in to access your dashboard" : "Fill in your details to get started"}
+            {isForgotPassword ? "Enter your email to receive a reset link" : isLogin ? "Sign in to access your dashboard" : "Fill in your details to get started"}
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="bg-card rounded-2xl p-6 shadow-deep space-y-4">
-          {!isLogin && (
+          {!isLogin && !isForgotPassword && (
             <>
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">Full Name *</label>
@@ -168,6 +183,7 @@ const AuthPage = () => {
             />
           </div>
 
+          {!isForgotPassword && (
           <div>
             <label className="text-sm font-medium text-foreground mb-1 block">Password</label>
             <div className="relative">
@@ -188,18 +204,31 @@ const AuthPage = () => {
               </button>
             </div>
           </div>
+          )}
 
           <Button type="submit" className="w-full h-11" disabled={loading}>
-            {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+            {loading ? "Please wait..." : isForgotPassword ? "Send Reset Link" : isLogin ? "Sign In" : "Create Account"}
           </Button>
+
+          {isLogin && !isForgotPassword && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                className="text-sm text-muted-foreground hover:text-accent hover:underline"
+              >
+                Forgot your password?
+              </button>
+            </div>
+          )}
 
           <div className="text-center">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => { setIsLogin(!isLogin); setIsForgotPassword(false); }}
               className="text-sm text-accent hover:underline"
             >
-              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+              {isForgotPassword ? "Back to Sign In" : isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
             </button>
           </div>
         </form>

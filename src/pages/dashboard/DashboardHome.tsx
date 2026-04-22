@@ -93,7 +93,7 @@ const DashboardHome = () => {
         ) : featuredProducts.length === 0 ? (
           <div className="bg-card rounded-xl p-8 text-center">
             <ShoppingBag className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">No products yet. Add products from admin panel.</p>
+            <p className="text-muted-foreground text-sm">No products available yet. Check back soon!</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

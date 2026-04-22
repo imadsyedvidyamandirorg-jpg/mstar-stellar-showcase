@@ -1,6 +1,5 @@
 import { Outlet } from "react-router-dom";
 import DashboardNav from "@/components/DashboardNav";
-import ContactButton from "@/components/ContactButton";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
 
@@ -12,7 +11,6 @@ const DashboardLayout = () => {
         <Outlet />
       </main>
       <Footer />
-      <ContactButton />
       <ChatBot />
     </div>
   );

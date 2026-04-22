@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ShoppingCart, Heart, Star, Search, Grid3X3, LayoutList, Loader2 } from "lucide-react";
+import { ShoppingCart, Heart, Search, Grid3X3, LayoutList, Loader2, Zap, Truck, Shield, ArrowRight, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(price);
@@ -64,16 +65,46 @@ const StorePage = () => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">Online Store</h1>
-          <p className="text-sm text-muted-foreground">{filteredProducts.length} products</p>
+    <div className="space-y-5 md:space-y-8">
+      {/* Hero Banner - boAt inspired */}
+      <div className="relative rounded-2xl md:rounded-3xl overflow-hidden bg-gradient-to-r from-mstar-black via-mstar-dark to-mstar-black p-6 md:p-10 lg:p-14">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,hsl(0_85%_50%/0.15),transparent_60%)]" />
+        <div className="relative z-10">
+          <Badge className="bg-accent/20 text-accent border-accent/30 mb-3">
+            <Flame className="h-3 w-3 mr-1" /> Hot Deals
+          </Badge>
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-3">
+            Deals Up To <span className="text-gradient">80% OFF</span>
+          </h1>
+          <p className="text-white/60 text-sm md:text-base max-w-lg">
+            Explore our premium collection of smartphones and accessories at unbeatable prices.
+          </p>
         </div>
+      </div>
 
-        {/* Search */}
-        <div className="relative w-full md:w-72">
+      {/* Trust Bar - boAt inspired */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { icon: Truck, label: "Free Delivery", sub: "On orders ₹5K+" },
+          { icon: Shield, label: "Genuine Products", sub: "100% Authentic" },
+          { icon: Zap, label: "Easy EMI", sub: "0% Interest" },
+          { icon: ArrowRight, label: "Easy Returns", sub: "7-day policy" },
+        ].map((item, i) => (
+          <div key={i} className="flex items-center gap-3 bg-card rounded-xl p-3 md:p-4 shadow-elegant">
+            <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+              <item.icon className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground text-xs md:text-sm">{item.label}</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">{item.sub}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search & Filters */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center justify-between">
+        <div className="relative w-full md:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search products..."
@@ -85,7 +116,7 @@ const StorePage = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
         {categories.map((category) => (
           <button
             key={category.id}
@@ -100,7 +131,7 @@ const StorePage = () => {
           </button>
         ))}
         <div className="flex-1" />
-        <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
+        <div className="hidden md:flex items-center gap-1 bg-muted rounded-lg p-1">
           <button
             onClick={() => setViewMode("grid")}
             className={`p-1.5 rounded ${viewMode === "grid" ? "bg-background shadow-sm" : ""}`}

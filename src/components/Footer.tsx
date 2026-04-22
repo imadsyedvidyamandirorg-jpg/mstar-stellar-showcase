@@ -1,7 +1,11 @@
 import { Instagram, Phone, Mail, MapPin } from "lucide-react";
 import mstarLogo from "@/assets/mstar-logo.png";
 
-const Footer = () => {
+interface FooterProps {
+  showMap?: boolean;
+}
+
+const Footer = ({ showMap = false }: FooterProps) => {
   const quickLinks = [
     { name: "Home", href: "#home" },
     { name: "Services", href: "#services" },
@@ -99,6 +103,23 @@ const Footer = () => {
             </ul>
           </div>
         </div>
+
+        {/* Map */}
+        {showMap && (
+          <div className="mt-8 md:mt-12 rounded-xl overflow-hidden border border-mstar-gray/20">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3634.6!2d72.43!3d24.17!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sMoti+Bazaar+Rd%2C+Palanpur%2C+Gujarat+385001!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+              width="100%"
+              height="200"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="MStar Mobile Location"
+              className="w-full"
+            />
+          </div>
+        )}
 
         {/* Copyright */}
         <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-mstar-gray/20 flex flex-col md:flex-row items-center justify-between gap-3">

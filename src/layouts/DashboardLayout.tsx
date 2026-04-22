@@ -11,7 +11,7 @@ const DashboardLayout = () => {
         <Outlet />
       </main>
       <Footer />
-      
+
       <ChatBot />
     </div>
   );

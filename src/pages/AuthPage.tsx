@@ -64,15 +64,20 @@ const AuthPage = () => {
         setLoading(false);
         return;
       }
-      const { error } = await signUp(form.email, form.password, {
+      const metadata: Record<string, string> = {
         full_name: form.full_name,
         phone: form.phone,
         address: form.address,
         city: form.city,
         state: form.state,
         pincode: form.pincode,
-        gender: form.gender,
-      });
+      };
+
+      if (form.gender) {
+        metadata.gender = form.gender;
+      }
+
+      const { error } = await signUp(form.email, form.password, metadata);
       if (error) {
         toast({ title: "Signup Failed", description: error.message, variant: "destructive" });
       } else {

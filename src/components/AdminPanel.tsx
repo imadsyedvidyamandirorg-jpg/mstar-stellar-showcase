@@ -565,4 +565,288 @@ const OffersManager = () => {
   );
 };
 
+// ==================== NOTIFICATIONS MANAGER ====================
+const NotificationsManager = () => {
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const { toast } = useToast();
+  const [form, setForm] = useState({ title: "", message: "", type: "general" });
+
+  const fetchNotifications = async () => {
+    const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false });
+    setNotifications(data || []);
+  };
+
+  useEffect(() => { fetchNotifications(); }, []);
+
+  const handleSubmit = async () => {
+    if (!form.title || !form.message) {
+      toast({ title: "Fill all fields", variant: "destructive" });
+      return;
+    }
+    await supabase.from("notifications").insert({ title: form.title, message: form.message, type: form.type });
+    toast({ title: "Notification sent to all users!" });
+    setShowForm(false);
+    setForm({ title: "", message: "", type: "general" });
+    fetchNotifications();
+  };
+
+  const deleteNotification = async (id: string) => {
+    await supabase.from("notifications").update({ is_active: false }).eq("id", id);
+    toast({ title: "Notification removed" });
+    fetchNotifications();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-foreground">Push Notifications ({notifications.length})</h3>
+          <p className="text-xs text-muted-foreground">Send alerts to all customers</p>
+        </div>
+        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+          <Send className="h-4 w-4 mr-1" /> Send Alert
+        </Button>
+      </div>
+      {showForm && (
+        <div className="bg-muted rounded-xl p-4 space-y-3">
+          <Input placeholder="Notification Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <textarea
+            placeholder="Notification message *"
+            value={form.message}
+            onChange={(e) => setForm({ ...form, message: e.target.value })}
+            className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+            <option value="general">General</option>
+            <option value="offer">Offer</option>
+            <option value="product">Product Update</option>
+            <option value="alert">Urgent Alert</option>
+          </select>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleSubmit}><Send className="h-4 w-4 mr-1" /> Send to All</Button>
+            <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+      {notifications.map((n) => (
+        <div key={n.id} className="flex items-center gap-3 bg-muted rounded-xl p-3">
+          <Bell className="h-8 w-8 text-accent flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">{n.title}</p>
+            <p className="text-xs text-muted-foreground truncate">{n.message}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{n.type} · {new Date(n.created_at).toLocaleDateString()}</p>
+          </div>
+          <button onClick={() => deleteNotification(n.id)} className="p-2 hover:bg-background rounded-lg">
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ==================== ORDER ALERTS MANAGER ====================
+const OrderAlertsManager = () => {
+  const [isEnabled, setIsEnabled] = useState(false);
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [code, setCode] = useState("");
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    // Check if alerts are enabled
+    const checkAlerts = async () => {
+      if (!user) return;
+      const { data } = await supabase.from("order_alerts").select("*").eq("user_id", user.id).maybeSingle();
+      if (data) setIsEnabled(data.is_enabled);
+    };
+    checkAlerts();
+
+    // Fetch recent orders
+    const fetchOrders = async () => {
+      const { data } = await supabase.from("orders").select("*, order_items(*)").order("created_at", { ascending: false }).limit(10);
+      setRecentOrders(data || []);
+    };
+    fetchOrders();
+
+    // Realtime order subscription
+    const channel = supabase
+      .channel("admin-orders")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
+        setRecentOrders((prev) => [payload.new as any, ...prev]);
+        if (isEnabled) {
+          // Play unique notification sound
+          try {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2);
+            osc.frequency.setValueAtTime(1320, ctx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.5);
+          } catch {}
+          toast({ title: "🔔 New Order!", description: `Order received - ₹${(payload.new as any).total_amount}` });
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, isEnabled]);
+
+  const handleActivate = async () => {
+    if (code !== "4594") {
+      toast({ title: "Invalid Code", description: "Please enter the correct activation code.", variant: "destructive" });
+      return;
+    }
+    if (!user) return;
+    const { data: existing } = await supabase.from("order_alerts").select("id").eq("user_id", user.id).maybeSingle();
+    if (existing) {
+      await supabase.from("order_alerts").update({ is_enabled: true }).eq("id", existing.id);
+    } else {
+      await supabase.from("order_alerts").insert({ user_id: user.id, is_enabled: true });
+    }
+    setIsEnabled(true);
+    setShowCodeInput(false);
+    setCode("");
+    toast({ title: "Order Alerts Activated! 🔔", description: "You'll now receive sound notifications for new orders." });
+  };
+
+  const handleDeactivate = async () => {
+    if (!user) return;
+    await supabase.from("order_alerts").update({ is_enabled: false }).eq("user_id", user.id);
+    setIsEnabled(false);
+    toast({ title: "Order Alerts Deactivated" });
+  };
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(price);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-foreground">Order Alerts</h3>
+          <p className="text-xs text-muted-foreground">Get notified when customers place orders</p>
+        </div>
+        {isEnabled ? (
+          <Button size="sm" variant="outline" onClick={handleDeactivate}>
+            <VolumeX className="h-4 w-4 mr-1" /> Disable
+          </Button>
+        ) : (
+          <Button size="sm" onClick={() => setShowCodeInput(true)}>
+            <Volume2 className="h-4 w-4 mr-1" /> Enable Alerts
+          </Button>
+        )}
+      </div>
+
+      {/* Status */}
+      <div className={`rounded-xl p-4 flex items-center gap-3 ${isEnabled ? "bg-green-500/10 border border-green-500/20" : "bg-muted"}`}>
+        {isEnabled ? <Volume2 className="h-6 w-6 text-green-500" /> : <VolumeX className="h-6 w-6 text-muted-foreground" />}
+        <div>
+          <p className="font-medium text-foreground text-sm">{isEnabled ? "Alerts Active" : "Alerts Inactive"}</p>
+          <p className="text-xs text-muted-foreground">{isEnabled ? "You'll hear a sound for every new order" : "Enable to get order notifications"}</p>
+        </div>
+      </div>
+
+      {/* Code Input */}
+      {showCodeInput && !isEnabled && (
+        <div className="bg-muted rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2 text-yellow-500 mb-2">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm font-medium">Enter Activation Code</span>
+          </div>
+          <Input type="password" placeholder="Enter 4-digit code" value={code} onChange={(e) => setCode(e.target.value)} maxLength={4} />
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleActivate}>Activate</Button>
+            <Button size="sm" variant="outline" onClick={() => { setShowCodeInput(false); setCode(""); }}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Orders */}
+      <div>
+        <h4 className="font-medium text-foreground text-sm mb-2">Recent Orders ({recentOrders.length})</h4>
+        {recentOrders.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">No orders yet.</p>
+        ) : (
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {recentOrders.map((order) => (
+              <div key={order.id} className="flex items-center gap-3 bg-muted rounded-xl p-3">
+                <ShoppingBag className="h-5 w-5 text-accent flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{order.delivery_name || "Customer"}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{order.status} · {order.payment_method}</p>
+                </div>
+                <p className="text-sm font-bold text-foreground">{formatPrice(order.total_amount)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ==================== ANALYTICS DASHBOARD ====================
+const AnalyticsDashboard = () => {
+  const [stats, setStats] = useState({ products: 0, orders: 0, totalRevenue: 0, reels: 0, posts: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const [productsRes, ordersRes, reelsRes, postsRes] = await Promise.all([
+        supabase.from("products").select("id", { count: "exact", head: true }).eq("is_active", true),
+        supabase.from("orders").select("total_amount"),
+        supabase.from("reels").select("id", { count: "exact", head: true }).eq("is_active", true),
+        supabase.from("posts").select("id", { count: "exact", head: true }).eq("is_active", true),
+      ]);
+      const totalRevenue = (ordersRes.data || []).reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
+      setStats({
+        products: productsRes.count || 0,
+        orders: ordersRes.data?.length || 0,
+        totalRevenue,
+        reels: reelsRes.count || 0,
+        posts: postsRes.count || 0,
+      });
+    };
+    fetchStats();
+  }, []);
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(price);
+
+  const statCards = [
+    { label: "Total Products", value: stats.products, icon: Package, color: "text-blue-500 bg-blue-500/10" },
+    { label: "Total Orders", value: stats.orders, icon: ShoppingBag, color: "text-green-500 bg-green-500/10" },
+    { label: "Revenue", value: formatPrice(stats.totalRevenue), icon: TrendingUp, color: "text-accent bg-accent/10" },
+    { label: "Active Reels", value: stats.reels, icon: Film, color: "text-pink-500 bg-pink-500/10" },
+    { label: "Active Posts", value: stats.posts, icon: Image, color: "text-purple-500 bg-purple-500/10" },
+    { label: "Views Today", value: "—", icon: Eye, color: "text-yellow-500 bg-yellow-500/10" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <h3 className="font-semibold text-foreground">Shop Analytics</h3>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {statCards.map((stat, i) => (
+          <div key={i} className="bg-muted rounded-xl p-4">
+            <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center mb-3`}>
+              <stat.icon className="h-5 w-5" />
+            </div>
+            <p className="text-xl md:text-2xl font-bold text-foreground">{stat.value}</p>
+            <p className="text-xs text-muted-foreground">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default AdminPanel;

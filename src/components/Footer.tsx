@@ -1,4 +1,4 @@
-import { Instagram, Phone, Mail, MapPin, Heart } from "lucide-react";
+import { Instagram, Phone, Mail, MapPin } from "lucide-react";
 import mstarLogo from "@/assets/mstar-logo.png";
 
 const Footer = () => {

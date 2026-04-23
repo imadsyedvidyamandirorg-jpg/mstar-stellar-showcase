@@ -153,9 +153,9 @@ const StorePage = () => {
                 <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wider mb-0.5">
                   {product.brand}
                 </p>
-                <h3 className="font-medium text-foreground text-sm md:text-base line-clamp-2 min-h-[2.5rem]">
+                <Link to={`/dashboard/product/${product.id}`} className="font-medium text-foreground text-sm md:text-base line-clamp-2 min-h-[2.5rem] hover:text-accent transition-colors block">
                   {product.name}
-                </h3>
+                </Link>
 
                 {/* Rating */}
                 {product.stock !== undefined && (

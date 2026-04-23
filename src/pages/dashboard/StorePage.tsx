@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { ShoppingCart, Heart, Search, Grid3X3, LayoutList, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -132,7 +133,7 @@ const StorePage = () => {
               className="group bg-card rounded-xl md:rounded-2xl overflow-hidden shadow-elegant hover:shadow-deep transition-all"
             >
               {/* Image */}
-              <div className="relative aspect-square bg-muted overflow-hidden">
+              <Link to={`/dashboard/product/${product.id}`} className="relative aspect-square bg-muted overflow-hidden block">
                 <img
                     src={product.images?.[0] || "/placeholder.svg"}
                     alt={product.name || ""}
@@ -146,7 +147,7 @@ const StorePage = () => {
                 <button className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Heart className="h-4 w-4 text-muted-foreground hover:text-accent transition-colors" />
                 </button>
-              </div>
+              </Link>
 
               {/* Content */}
               <div className="p-3 md:p-4">

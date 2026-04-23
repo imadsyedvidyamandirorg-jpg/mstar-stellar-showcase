@@ -66,8 +66,9 @@ Rules:
 
     const models = [
       "meta-llama/llama-3.3-70b-instruct:free",
-      "nous/hermes-3-llama-3.1-405b:free",
-      "google/gemma-3-27b-it:free",
+      "meta-llama/llama-3.1-8b-instruct:free",
+      "meta-llama/llama-3.2-3b-instruct:free",
+      "google/gemma-3-12b-it:free",
     ];
 
     let response: Response | null = null;
@@ -81,8 +82,8 @@ Rules:
         body: JSON.stringify({
           model,
           messages: [
-            ...(model.includes("gemma") ? [] : [{ role: "system", content: systemPrompt }]),
-            ...(model.includes("gemma") ? [{ role: "user", content: systemPrompt + "\n\nUser message: " + messages[messages.length - 1]?.content }] : messages),
+            { role: "system", content: systemPrompt },
+            ...messages,
           ],
         }),
       });

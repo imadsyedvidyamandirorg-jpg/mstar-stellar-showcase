@@ -71,7 +71,7 @@ Rules:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "arcee-ai/trinity-large-preview:free",
+        model: "google/gemma-3-27b-it:free",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,

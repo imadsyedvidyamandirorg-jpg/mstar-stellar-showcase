@@ -224,6 +224,30 @@ export type Database = {
         }
         Relationships: []
       }
+      panoramas: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_active: boolean | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          title?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          title?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string

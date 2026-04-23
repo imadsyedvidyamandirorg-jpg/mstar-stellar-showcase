@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Eye, Loader2, Move } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { ArrowLeft, Eye, Loader2, Move, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -49,11 +49,7 @@ const VirtualTourPage = () => {
         <h1 className="text-lg md:text-xl font-bold text-foreground">Explore Our Shop</h1>
       </div>
 
-      <PanoramaViewer imageUrl={panoramas[activeIndex]?.image_url} />
-
-      <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center">
-        <Move className="h-3 w-3" /> Drag to look around
-      </div>
+      <PanoramaViewer key={activeIndex} imageUrl={panoramas[activeIndex]?.image_url} />
 
       {panoramas.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
@@ -80,6 +76,23 @@ const PanoramaViewer = ({ imageUrl }: { imageUrl: string }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [startOffset, setStartOffset] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+
+  const handleZoomIn = () => setZoom((z) => Math.min(3, z + 0.3));
+  const handleZoomOut = () => setZoom((z) => Math.max(0.5, z - 0.3));
+  const handleReset = () => { setZoom(1); setPosition({ x: 0, y: 0 }); };
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    setZoom((z) => Math.max(0.5, Math.min(3, z - e.deltaY * 0.002)));
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     setDragging(true);
@@ -92,9 +105,10 @@ const PanoramaViewer = ({ imageUrl }: { imageUrl: string }) => {
     if (!dragging) return;
     const dx = e.clientX - startPos.x;
     const dy = e.clientY - startPos.y;
+    const sensitivity = 0.3 / zoom;
     setPosition({
-      x: startOffset.x + dx * 0.3,
-      y: Math.max(-30, Math.min(30, startOffset.y + dy * 0.3)),
+      x: startOffset.x + dx * sensitivity,
+      y: Math.max(-60, Math.min(60, startOffset.y + dy * sensitivity)),
     });
   };
 
@@ -103,7 +117,7 @@ const PanoramaViewer = ({ imageUrl }: { imageUrl: string }) => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden bg-muted cursor-grab active:cursor-grabbing select-none"
+      className="relative w-full aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden bg-black cursor-grab active:cursor-grabbing select-none"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -111,16 +125,28 @@ const PanoramaViewer = ({ imageUrl }: { imageUrl: string }) => {
       <img
         src={imageUrl}
         alt="360° Shop View"
-        className="absolute h-full min-w-[200%] object-cover pointer-events-none"
+        className="absolute h-full min-w-[250%] object-cover pointer-events-none origin-center"
         style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
+          transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
           transition: dragging ? "none" : "transform 0.3s ease-out",
         }}
         draggable={false}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-      <div className="absolute bottom-3 left-3 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs">
+      <div className="absolute bottom-3 left-3 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full text-white text-xs flex items-center gap-1.5">
+        <Move className="h-3 w-3" />
         360° View
+      </div>
+      <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+        <button onClick={handleZoomOut} className="w-8 h-8 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors">
+          <ZoomOut className="h-3.5 w-3.5" />
+        </button>
+        <button onClick={handleReset} className="w-8 h-8 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors">
+          <RotateCcw className="h-3.5 w-3.5" />
+        </button>
+        <button onClick={handleZoomIn} className="w-8 h-8 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors">
+          <ZoomIn className="h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
   );

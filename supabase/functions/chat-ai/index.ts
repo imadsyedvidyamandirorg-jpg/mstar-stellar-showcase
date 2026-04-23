@@ -64,25 +64,36 @@ Rules:
 - Keep responses concise but informative
 - Format responses with **bold** for important info and bullet points where appropriate`;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemma-3-27b-it:free",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-      }),
-    });
+    const models = [
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "meta-llama/llama-3.1-8b-instruct:free",
+      "meta-llama/llama-3.2-3b-instruct:free",
+      "google/gemma-3-12b-it:free",
+    ];
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("OpenRouter error:", response.status, errText);
-      return new Response(JSON.stringify({ error: "AI service error" }), {
+    let response: Response | null = null;
+    for (const model of models) {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...messages,
+          ],
+        }),
+      });
+      if (r.ok) { response = r; break; }
+      const errText = await r.text();
+      console.error(`Model ${model} failed (${r.status}):`, errText);
+    }
+
+    if (!response || !response.ok) {
+      return new Response(JSON.stringify({ error: "AI service temporarily unavailable. Please try again." }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

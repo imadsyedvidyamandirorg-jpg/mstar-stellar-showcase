@@ -18,27 +18,36 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemma-3-27b-it:free",
-        messages: [
-          {
-            role: "system",
-            content: `You are a friendly customer service representative for MStar Mobile, a smartphone shop in Palanpur, Gujarat. Reply to customer reviews naturally and warmly like a real human would. Keep it short (1-2 sentences). Never reveal you are AI. Be thankful, helpful, and professional. If they mention issues, empathize and offer help. The product being reviewed is: ${product_name || "a product"}.`,
-          },
-          { role: "user", content: comment_text },
-        ],
-      }),
-    });
+    const systemContent = `You are a friendly customer service representative for MStar Mobile, a smartphone shop in Palanpur, Gujarat. Reply to customer reviews naturally and warmly like a real human would. Keep it short (1-2 sentences). Never reveal you are AI. Be thankful, helpful, and professional. If they mention issues, empathize and offer help. The product being reviewed is: ${product_name || "a product"}.`;
 
-    if (!response.ok) {
-      console.error("AI error:", response.status);
-      return new Response(JSON.stringify({ error: "AI error" }), {
+    const models = [
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "meta-llama/llama-3.1-8b-instruct:free",
+      "google/gemma-3-12b-it:free",
+    ];
+
+    let response: Response | null = null;
+    for (const model of models) {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemContent },
+            { role: "user", content: comment_text },
+          ],
+        }),
+      });
+      if (r.ok) { response = r; break; }
+      console.error(`Model ${model} failed:`, r.status);
+    }
+
+    if (!response || !response.ok) {
+      return new Response(JSON.stringify({ error: "AI temporarily unavailable" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

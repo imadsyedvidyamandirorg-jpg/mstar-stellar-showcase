@@ -224,6 +224,30 @@ export type Database = {
         }
         Relationships: []
       }
+      panoramas: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_active: boolean | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          title?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          title?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
@@ -314,6 +338,41 @@ export type Database = {
           likes_count?: number | null
         }
         Relationships: []
+      }
+      product_comments: {
+        Row: {
+          ai_reply: string | null
+          content: string
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          ai_reply?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          ai_reply?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_comments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {

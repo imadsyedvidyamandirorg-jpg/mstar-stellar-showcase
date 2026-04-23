@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp } from "lucide-react";
+import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "notifications" | "alerts" | "analytics";
+type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "notifications" | "alerts" | "analytics" | "panorama";
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -25,6 +25,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
     { id: "notifications" as Tab, label: "Push Alerts", icon: Bell },
     { id: "alerts" as Tab, label: "Order Alerts", icon: Volume2 },
     { id: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
+    { id: "panorama" as Tab, label: "360° Tour", icon: Camera },
   ];
 
   return (
@@ -74,6 +75,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
           {activeTab === "notifications" && <NotificationsManager />}
           {activeTab === "alerts" && <OrderAlertsManager />}
           {activeTab === "analytics" && <AnalyticsDashboard />}
+          {activeTab === "panorama" && <PanoramaManager />}
         </div>
       </div>
     </div>
@@ -93,6 +95,8 @@ const ProductsManager = () => {
     badge_color: "bg-accent", emi_available: false,
     is_new_arrival: false, is_bestseller: false,
   });
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -120,15 +124,48 @@ const ProductsManager = () => {
     };
 
     if (editingId) {
+      // Upload pending images
+      if (pendingImages.length > 0) {
+        const product = products.find((p) => p.id === editingId);
+        const existingImages = product?.images || [];
+        const uploadedUrls: string[] = [];
+        for (const file of pendingImages) {
+          const fileExt = file.name.split(".").pop();
+          const filePath = `${editingId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+          const { error } = await supabase.storage.from("product-images").upload(filePath, file);
+          if (!error) {
+            const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
+            uploadedUrls.push(urlData.publicUrl);
+          }
+        }
+        (payload as any).images = [...existingImages, ...uploadedUrls];
+      }
       await supabase.from("products").update(payload).eq("id", editingId);
       toast({ title: "Product updated!" });
     } else {
-      await supabase.from("products").insert(payload);
+      const { data: newProduct } = await supabase.from("products").insert(payload).select().single();
+      if (newProduct && pendingImages.length > 0) {
+        const uploadedUrls: string[] = [];
+        for (const file of pendingImages) {
+          const fileExt = file.name.split(".").pop();
+          const filePath = `${newProduct.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+          const { error } = await supabase.storage.from("product-images").upload(filePath, file);
+          if (!error) {
+            const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
+            uploadedUrls.push(urlData.publicUrl);
+          }
+        }
+        if (uploadedUrls.length > 0) {
+          await supabase.from("products").update({ images: uploadedUrls }).eq("id", newProduct.id);
+        }
+      }
       toast({ title: "Product added!" });
     }
     setShowForm(false);
     setEditingId(null);
     setForm({ name: "", brand: "", category: "smartphones", description: "", price: "", original_price: "", stock: "0", badge: "", badge_color: "bg-accent", emi_available: false, is_new_arrival: false, is_bestseller: false });
+    setPendingImages([]);
+    setPreviewUrls([]);
     fetchProducts();
   };
 
@@ -223,6 +260,34 @@ const ProductsManager = () => {
               <input type="checkbox" checked={form.is_bestseller} onChange={(e) => setForm({ ...form, is_bestseller: e.target.checked })} />
               Bestseller
             </label>
+          </div>
+          {/* Image Upload */}
+          <div>
+            <p className="text-sm font-medium text-foreground mb-2">Product Images</p>
+            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-background border border-input rounded-md text-sm hover:bg-muted transition-colors">
+              <Image className="h-4 w-4" /> Choose Images
+              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                setPendingImages((prev) => [...prev, ...files]);
+                setPreviewUrls((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+              }} />
+            </label>
+            {previewUrls.length > 0 && (
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {previewUrls.map((url, i) => (
+                  <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => {
+                        setPendingImages((prev) => prev.filter((_, idx) => idx !== i));
+                        setPreviewUrls((prev) => prev.filter((_, idx) => idx !== i));
+                      }}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-destructive rounded-full flex items-center justify-center text-white text-[10px]"
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSubmit} size="sm">{editingId ? "Update" : "Add"} Product</Button>
@@ -850,3 +915,71 @@ const AnalyticsDashboard = () => {
 };
 
 export default AdminPanel;
+
+// ==================== PANORAMA MANAGER ====================
+const PanoramaManager = () => {
+  const [panoramas, setPanoramas] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [title, setTitle] = useState("Shop View");
+  const { toast } = useToast();
+
+  const fetchPanoramas = async () => {
+    const { data } = await supabase.from("panoramas").select("*").order("created_at", { ascending: false });
+    setPanoramas(data || []);
+  };
+
+  useEffect(() => { fetchPanoramas(); }, []);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    const filePath = `${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("panorama-images").upload(filePath, file);
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("panorama-images").getPublicUrl(filePath);
+    await supabase.from("panoramas").insert({ title, image_url: urlData.publicUrl });
+    toast({ title: "360° view uploaded!" });
+    setTitle("Shop View");
+    setUploading(false);
+    fetchPanoramas();
+  };
+
+  const deletePanorama = async (id: string) => {
+    await supabase.from("panoramas").update({ is_active: false }).eq("id", id);
+    toast({ title: "Panorama removed" });
+    fetchPanoramas();
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="font-semibold text-foreground">360° Shop Tour</h3>
+      <p className="text-xs text-muted-foreground">Upload panoramic images for virtual shop tours. Use a 360° camera app or wide panorama photos.</p>
+      <div className="bg-muted rounded-xl p-4 space-y-3">
+        <Input placeholder="View title (e.g., Entrance, Display Area)" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <label className="cursor-pointer">
+          <Button size="sm" variant="outline" asChild disabled={uploading}>
+            <span><Camera className="h-4 w-4 mr-1" /> {uploading ? "Uploading..." : "Upload Panorama Image"}</span>
+          </Button>
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+            if (e.target.files?.[0]) handleUpload(e.target.files[0]);
+          }} />
+        </label>
+      </div>
+      {panoramas.map((p) => (
+        <div key={p.id} className="flex items-center gap-3 bg-muted rounded-xl p-3">
+          <img src={p.image_url} alt="" className="w-20 h-12 rounded-lg object-cover flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">{p.title}</p>
+            <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</p>
+          </div>
+          <button onClick={() => deletePanorama(p.id)} className="p-2 hover:bg-background rounded-lg">
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};

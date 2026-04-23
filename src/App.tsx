@@ -19,6 +19,7 @@ import OffersPage from "./pages/dashboard/OffersPage";
 import StorePage from "./pages/dashboard/StorePage";
 import CartPage from "./pages/dashboard/CartPage";
 import ProductPage from "./pages/dashboard/ProductPage";
+import VirtualTourPage from "./pages/dashboard/VirtualTourPage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="store" element={<StorePage />} />
               <Route path="cart" element={<CartPage />} />
               <Route path="product/:id" element={<ProductPage />} />
+              <Route path="virtual-tour" element={<VirtualTourPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

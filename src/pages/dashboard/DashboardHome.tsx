@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Film, Image, Bell, Gift, ShoppingBag, ArrowRight, TrendingUp, Star, Loader2 } from "lucide-react";
+import { Film, Image, Bell, Gift, ShoppingBag, ArrowRight, TrendingUp, Star, Loader2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,6 +31,7 @@ const DashboardHome = () => {
     { name: "Alerts", icon: Bell, href: "/dashboard/notifications", color: "bg-yellow-500" },
     { name: "Offers", icon: Gift, href: "/dashboard/offers", color: "bg-green-500" },
     { name: "Store", icon: ShoppingBag, href: "/dashboard/store", color: "bg-accent" },
+    { name: "360° Tour", icon: Eye, href: "/dashboard/virtual-tour", color: "bg-teal-500" },
   ];
 
   return (

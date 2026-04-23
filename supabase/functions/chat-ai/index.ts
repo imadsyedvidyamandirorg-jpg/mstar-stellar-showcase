@@ -64,25 +64,35 @@ Rules:
 - Keep responses concise but informative
 - Format responses with **bold** for important info and bullet points where appropriate`;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3.3-70b-instruct:free",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-      }),
-    });
+    const models = [
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "nous/hermes-3-llama-3.1-405b:free",
+      "google/gemma-3-27b-it:free",
+    ];
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("OpenRouter error:", response.status, errText);
-      return new Response(JSON.stringify({ error: "AI service error" }), {
+    let response: Response | null = null;
+    for (const model of models) {
+      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            ...(model.includes("gemma") ? [] : [{ role: "system", content: systemPrompt }]),
+            ...(model.includes("gemma") ? [{ role: "user", content: systemPrompt + "\n\nUser message: " + messages[messages.length - 1]?.content }] : messages),
+          ],
+        }),
+      });
+      if (r.ok) { response = r; break; }
+      const errText = await r.text();
+      console.error(`Model ${model} failed (${r.status}):`, errText);
+    }
+
+    if (!response || !response.ok) {
+      return new Response(JSON.stringify({ error: "AI service temporarily unavailable. Please try again." }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

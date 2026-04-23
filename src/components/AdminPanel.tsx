@@ -93,6 +93,8 @@ const ProductsManager = () => {
     badge_color: "bg-accent", emi_available: false,
     is_new_arrival: false, is_bestseller: false,
   });
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -120,15 +122,48 @@ const ProductsManager = () => {
     };
 
     if (editingId) {
+      // Upload pending images
+      if (pendingImages.length > 0) {
+        const product = products.find((p) => p.id === editingId);
+        const existingImages = product?.images || [];
+        const uploadedUrls: string[] = [];
+        for (const file of pendingImages) {
+          const fileExt = file.name.split(".").pop();
+          const filePath = `${editingId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+          const { error } = await supabase.storage.from("product-images").upload(filePath, file);
+          if (!error) {
+            const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
+            uploadedUrls.push(urlData.publicUrl);
+          }
+        }
+        (payload as any).images = [...existingImages, ...uploadedUrls];
+      }
       await supabase.from("products").update(payload).eq("id", editingId);
       toast({ title: "Product updated!" });
     } else {
-      await supabase.from("products").insert(payload);
+      const { data: newProduct } = await supabase.from("products").insert(payload).select().single();
+      if (newProduct && pendingImages.length > 0) {
+        const uploadedUrls: string[] = [];
+        for (const file of pendingImages) {
+          const fileExt = file.name.split(".").pop();
+          const filePath = `${newProduct.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+          const { error } = await supabase.storage.from("product-images").upload(filePath, file);
+          if (!error) {
+            const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
+            uploadedUrls.push(urlData.publicUrl);
+          }
+        }
+        if (uploadedUrls.length > 0) {
+          await supabase.from("products").update({ images: uploadedUrls }).eq("id", newProduct.id);
+        }
+      }
       toast({ title: "Product added!" });
     }
     setShowForm(false);
     setEditingId(null);
     setForm({ name: "", brand: "", category: "smartphones", description: "", price: "", original_price: "", stock: "0", badge: "", badge_color: "bg-accent", emi_available: false, is_new_arrival: false, is_bestseller: false });
+    setPendingImages([]);
+    setPreviewUrls([]);
     fetchProducts();
   };
 

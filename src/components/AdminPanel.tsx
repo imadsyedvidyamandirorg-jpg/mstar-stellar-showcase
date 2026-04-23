@@ -915,3 +915,71 @@ const AnalyticsDashboard = () => {
 };
 
 export default AdminPanel;
+
+// ==================== PANORAMA MANAGER ====================
+const PanoramaManager = () => {
+  const [panoramas, setPanoramas] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [title, setTitle] = useState("Shop View");
+  const { toast } = useToast();
+
+  const fetchPanoramas = async () => {
+    const { data } = await supabase.from("panoramas").select("*").order("created_at", { ascending: false });
+    setPanoramas(data || []);
+  };
+
+  useEffect(() => { fetchPanoramas(); }, []);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    const filePath = `${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("panorama-images").upload(filePath, file);
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("panorama-images").getPublicUrl(filePath);
+    await supabase.from("panoramas").insert({ title, image_url: urlData.publicUrl });
+    toast({ title: "360° view uploaded!" });
+    setTitle("Shop View");
+    setUploading(false);
+    fetchPanoramas();
+  };
+
+  const deletePanorama = async (id: string) => {
+    await supabase.from("panoramas").update({ is_active: false }).eq("id", id);
+    toast({ title: "Panorama removed" });
+    fetchPanoramas();
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="font-semibold text-foreground">360° Shop Tour</h3>
+      <p className="text-xs text-muted-foreground">Upload panoramic images for virtual shop tours. Use a 360° camera app or wide panorama photos.</p>
+      <div className="bg-muted rounded-xl p-4 space-y-3">
+        <Input placeholder="View title (e.g., Entrance, Display Area)" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <label className="cursor-pointer">
+          <Button size="sm" variant="outline" asChild disabled={uploading}>
+            <span><Camera className="h-4 w-4 mr-1" /> {uploading ? "Uploading..." : "Upload Panorama Image"}</span>
+          </Button>
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+            if (e.target.files?.[0]) handleUpload(e.target.files[0]);
+          }} />
+        </label>
+      </div>
+      {panoramas.map((p) => (
+        <div key={p.id} className="flex items-center gap-3 bg-muted rounded-xl p-3">
+          <img src={p.image_url} alt="" className="w-20 h-12 rounded-lg object-cover flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">{p.title}</p>
+            <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</p>
+          </div>
+          <button onClick={() => deletePanorama(p.id)} className="p-2 hover:bg-background rounded-lg">
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};

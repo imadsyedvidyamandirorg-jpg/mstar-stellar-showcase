@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp } from "lucide-react";
+import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "notifications" | "alerts" | "analytics";
+type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "notifications" | "alerts" | "analytics" | "panorama";
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -25,6 +25,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
     { id: "notifications" as Tab, label: "Push Alerts", icon: Bell },
     { id: "alerts" as Tab, label: "Order Alerts", icon: Volume2 },
     { id: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
+    { id: "panorama" as Tab, label: "360° Tour", icon: Camera },
   ];
 
   return (
@@ -74,6 +75,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
           {activeTab === "notifications" && <NotificationsManager />}
           {activeTab === "alerts" && <OrderAlertsManager />}
           {activeTab === "analytics" && <AnalyticsDashboard />}
+          {activeTab === "panorama" && <PanoramaManager />}
         </div>
       </div>
     </div>

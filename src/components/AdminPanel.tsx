@@ -259,6 +259,34 @@ const ProductsManager = () => {
               Bestseller
             </label>
           </div>
+          {/* Image Upload */}
+          <div>
+            <p className="text-sm font-medium text-foreground mb-2">Product Images</p>
+            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-background border border-input rounded-md text-sm hover:bg-muted transition-colors">
+              <Image className="h-4 w-4" /> Choose Images
+              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                setPendingImages((prev) => [...prev, ...files]);
+                setPreviewUrls((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+              }} />
+            </label>
+            {previewUrls.length > 0 && (
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {previewUrls.map((url, i) => (
+                  <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => {
+                        setPendingImages((prev) => prev.filter((_, idx) => idx !== i));
+                        setPreviewUrls((prev) => prev.filter((_, idx) => idx !== i));
+                      }}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-destructive rounded-full flex items-center justify-center text-white text-[10px]"
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="flex gap-2">
             <Button onClick={handleSubmit} size="sm">{editingId ? "Update" : "Add"} Product</Button>
             <Button variant="outline" size="sm" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</Button>

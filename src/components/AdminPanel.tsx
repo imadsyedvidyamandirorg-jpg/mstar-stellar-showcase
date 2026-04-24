@@ -88,6 +88,7 @@ const ProductsManager = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
   const { toast } = useToast();
   const [form, setForm] = useState({
     name: "", brand: "", category: "smartphones", description: "",
@@ -97,6 +98,35 @@ const ProductsManager = () => {
   });
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  const handleGenerateDescription = async () => {
+    if (!form.name) {
+      toast({ title: "Add a product name first", variant: "destructive" });
+      return;
+    }
+    setGeneratingDesc(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-product-description", {
+        body: {
+          name: form.name,
+          brand: form.brand,
+          category: form.category,
+          price: form.price,
+        },
+      });
+      if (error) throw error;
+      if (data?.description) {
+        setForm((f) => ({ ...f, description: data.description }));
+        toast({ title: "Description generated!", description: "Edit it before saving if needed." });
+      } else if (data?.error) {
+        toast({ title: "AI error", description: data.error, variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Could not generate", description: e?.message || "Try again", variant: "destructive" });
+    } finally {
+      setGeneratingDesc(false);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -230,12 +260,31 @@ const ProductsManager = () => {
             <option value="accessories">Accessories</option>
             <option value="electronics">Electronics</option>
           </select>
-          <textarea
-            placeholder="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-foreground">Description (markdown supported)</label>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleGenerateDescription}
+                disabled={generatingDesc || !form.name}
+                className="h-7 text-xs gap-1"
+              >
+                {generatingDesc ? (
+                  <><Loader2 className="h-3 w-3 animate-spin" /> Writing...</>
+                ) : (
+                  <><Sparkles className="h-3 w-3 text-accent" /> Generate with AI</>
+                )}
+              </Button>
+            </div>
+            <textarea
+              placeholder="Description (or click 'Generate with AI' above)"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Input placeholder="Badge (e.g., Bestseller)" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} />
             <select value={form.badge_color} onChange={(e) => setForm({ ...form, badge_color: e.target.value })} className="h-10 rounded-md border border-input bg-background px-3 text-sm">

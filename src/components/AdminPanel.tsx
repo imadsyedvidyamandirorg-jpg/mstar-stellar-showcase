@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera } from "lucide-react";
+import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera, Sparkles, Loader2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,6 +88,7 @@ const ProductsManager = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
   const { toast } = useToast();
   const [form, setForm] = useState({
     name: "", brand: "", category: "smartphones", description: "",
@@ -97,6 +98,35 @@ const ProductsManager = () => {
   });
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  const handleGenerateDescription = async () => {
+    if (!form.name) {
+      toast({ title: "Add a product name first", variant: "destructive" });
+      return;
+    }
+    setGeneratingDesc(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-product-description", {
+        body: {
+          name: form.name,
+          brand: form.brand,
+          category: form.category,
+          price: form.price,
+        },
+      });
+      if (error) throw error;
+      if (data?.description) {
+        setForm((f) => ({ ...f, description: data.description }));
+        toast({ title: "Description generated!", description: "Edit it before saving if needed." });
+      } else if (data?.error) {
+        toast({ title: "AI error", description: data.error, variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Could not generate", description: e?.message || "Try again", variant: "destructive" });
+    } finally {
+      setGeneratingDesc(false);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -230,12 +260,31 @@ const ProductsManager = () => {
             <option value="accessories">Accessories</option>
             <option value="electronics">Electronics</option>
           </select>
-          <textarea
-            placeholder="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-foreground">Description (markdown supported)</label>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleGenerateDescription}
+                disabled={generatingDesc || !form.name}
+                className="h-7 text-xs gap-1"
+              >
+                {generatingDesc ? (
+                  <><Loader2 className="h-3 w-3 animate-spin" /> Writing...</>
+                ) : (
+                  <><Sparkles className="h-3 w-3 text-accent" /> Generate with AI</>
+                )}
+              </Button>
+            </div>
+            <textarea
+              placeholder="Description (or click 'Generate with AI' above)"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Input placeholder="Badge (e.g., Bestseller)" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} />
             <select value={form.badge_color} onChange={(e) => setForm({ ...form, badge_color: e.target.value })} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
@@ -315,7 +364,9 @@ const ProductsManager = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-medium text-foreground text-sm truncate">{product.name}</h4>
-                <p className="text-xs text-muted-foreground">{product.brand} · Stock: {product.stock}</p>
+                <p className="text-xs text-muted-foreground">
+                  {product.brand} · {(product.stock ?? 0) > 0 ? <span className="text-green-600">In Stock</span> : <span className="text-destructive">Out of Stock</span>}
+                </p>
                 <p className="text-sm font-semibold text-foreground">{formatPrice(product.price)}</p>
               </div>
               <div className="flex items-center gap-1">
@@ -423,6 +474,10 @@ const ReelsManager = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const [caption, setCaption] = useState("");
+  const [pendingVideo, setPendingVideo] = useState<File | null>(null);
+  const [pendingThumb, setPendingThumb] = useState<File | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string>("");
 
   const fetchReels = async () => {
     setLoading(true);
@@ -433,20 +488,46 @@ const ReelsManager = () => {
 
   useEffect(() => { fetchReels(); }, []);
 
-  const handleUpload = async (file: File, caption: string) => {
-    setUploading(true);
-    const filePath = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("reel-videos").upload(filePath, file);
-    if (error) {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-      setUploading(false);
+  const handleUpload = async () => {
+    if (!pendingVideo) {
+      toast({ title: "Please select a video", variant: "destructive" });
       return;
     }
-    const { data: urlData } = supabase.storage.from("reel-videos").getPublicUrl(filePath);
-    await supabase.from("reels").insert({ video_url: urlData.publicUrl, caption });
-    toast({ title: "Reel uploaded!" });
-    setUploading(false);
-    fetchReels();
+    setUploading(true);
+    try {
+      const videoPath = `${Date.now()}-${pendingVideo.name}`;
+      const { error: vErr } = await supabase.storage.from("reel-videos").upload(videoPath, pendingVideo);
+      if (vErr) throw vErr;
+      const { data: vUrl } = supabase.storage.from("reel-videos").getPublicUrl(videoPath);
+
+      let thumbnail_url: string | null = null;
+      if (pendingThumb) {
+        const thumbPath = `thumb-${Date.now()}-${pendingThumb.name}`;
+        const { error: tErr } = await supabase.storage.from("reel-videos").upload(thumbPath, pendingThumb);
+        if (!tErr) {
+          const { data: tUrl } = supabase.storage.from("reel-videos").getPublicUrl(thumbPath);
+          thumbnail_url = tUrl.publicUrl;
+        }
+      }
+
+      const { error: insertErr } = await supabase.from("reels").insert({
+        video_url: vUrl.publicUrl,
+        thumbnail_url,
+        caption: caption || null,
+      });
+      if (insertErr) throw insertErr;
+
+      toast({ title: "Reel uploaded!" });
+      setCaption("");
+      setPendingVideo(null);
+      setPendingThumb(null);
+      setThumbPreview("");
+      fetchReels();
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e?.message || "Try again", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const deleteReel = async (id: string) => {
@@ -455,27 +536,53 @@ const ReelsManager = () => {
     fetchReels();
   };
 
-  const [caption, setCaption] = useState("");
-
   return (
     <div className="space-y-4">
       <h3 className="font-semibold text-foreground">Reels ({reels.length})</h3>
       <div className="bg-muted rounded-xl p-4 space-y-3">
         <Input placeholder="Reel caption..." value={caption} onChange={(e) => setCaption(e.target.value)} />
-        <div className="flex gap-2">
-          <label className="cursor-pointer">
-            <Button size="sm" variant="outline" asChild disabled={uploading}>
-              <span><Film className="h-4 w-4 mr-1" /> {uploading ? "Uploading..." : "Upload Video"}</span>
-            </Button>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Video picker */}
+          <label className="cursor-pointer flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-4 hover:bg-background/50 transition-colors min-h-[100px]">
+            <Film className="h-6 w-6 text-muted-foreground mb-1" />
+            <span className="text-xs font-medium text-foreground">{pendingVideo ? pendingVideo.name.slice(0, 20) : "Choose Video *"}</span>
             <input type="file" accept="video/*" className="hidden" onChange={(e) => {
-              if (e.target.files?.[0]) handleUpload(e.target.files[0], caption);
+              if (e.target.files?.[0]) setPendingVideo(e.target.files[0]);
+            }} />
+          </label>
+          {/* Thumbnail picker */}
+          <label className="cursor-pointer flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-4 hover:bg-background/50 transition-colors min-h-[100px] overflow-hidden relative">
+            {thumbPreview ? (
+              <img src={thumbPreview} alt="thumb" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <>
+                <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+                <span className="text-xs font-medium text-foreground">Choose Thumbnail</span>
+                <span className="text-[10px] text-muted-foreground">(YouTube-style)</span>
+              </>
+            )}
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) {
+                setPendingThumb(f);
+                setThumbPreview(URL.createObjectURL(f));
+              }
             }} />
           </label>
         </div>
+        <Button size="sm" onClick={handleUpload} disabled={uploading || !pendingVideo} className="w-full">
+          {uploading ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Uploading...</> : <><Plus className="h-4 w-4 mr-1" /> Publish Reel</>}
+        </Button>
       </div>
       {reels.map((reel) => (
         <div key={reel.id} className="flex items-center gap-3 bg-muted rounded-xl p-3">
-          <Film className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+          {reel.thumbnail_url ? (
+            <img src={reel.thumbnail_url} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-14 h-14 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
+              <Film className="h-6 w-6 text-muted-foreground" />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm text-foreground truncate">{reel.caption || "No caption"}</p>
             <p className="text-xs text-muted-foreground">❤️ {reel.likes_count} · 💬 {reel.comments_count}</p>

@@ -1,50 +1,102 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft, ShoppingBag, CreditCard, Tag } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft, ShoppingBag, CreditCard, Tag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/contexts/CartContext";
 import { formatPrice } from "@/data/products";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const CartPage = () => {
   const { items, removeFromCart, updateQuantity, clearCart, totalPrice, totalItems } = useCart();
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [placing, setPlacing] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const applyCoupon = () => {
-    if (couponCode.toUpperCase() === "WEEKEND30") {
-      setDiscount(totalPrice * 0.3);
-      toast({
-        title: "Coupon Applied!",
-        description: "You got 30% off!",
-      });
-    } else if (couponCode.toUpperCase() === "STUDENT10") {
-      setDiscount(totalPrice * 0.1);
-      toast({
-        title: "Coupon Applied!",
-        description: "You got 10% off!",
-      });
-    } else {
-      toast({
-        title: "Invalid Coupon",
-        description: "Please enter a valid code.",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "No active coupons",
+      description: "There are no promo codes available right now.",
+      variant: "destructive",
+    });
   };
 
   const finalTotal = totalPrice - discount;
 
-  const handleCheckout = () => {
-    toast({
-      title: "Order Placed! 🎉",
-      description: "We'll contact you shortly.",
-    });
-    clearCart();
-    setDiscount(0);
-    setCouponCode("");
+  const handleCheckout = async () => {
+    if (!user) {
+      toast({ title: "Please sign in", description: "You need to log in before placing an order.", variant: "destructive" });
+      navigate("/auth");
+      return;
+    }
+    if (items.length === 0) return;
+    setPlacing(true);
+
+    try {
+      // Get profile for delivery details
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone, address, city, state, pincode")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      // Create order
+      const { data: order, error: orderErr } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          total_amount: finalTotal,
+          status: "pending",
+          payment_status: "pending",
+          payment_method: "cod",
+          delivery_name: profile?.full_name || null,
+          delivery_phone: profile?.phone || null,
+          delivery_address: profile?.address || null,
+          delivery_city: profile?.city || null,
+          delivery_state: profile?.state || null,
+          delivery_pincode: profile?.pincode || null,
+        })
+        .select()
+        .single();
+
+      if (orderErr || !order) throw orderErr || new Error("Failed to create order");
+
+      // Insert order items
+      const orderItems = items.map((item) => ({
+        order_id: order.id,
+        product_id: item.id,
+        product_name: item.name,
+        product_image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+      }));
+      const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
+      if (itemsErr) throw itemsErr;
+
+      toast({
+        title: "Order Placed! 🎉",
+        description: "We'll contact you shortly to confirm.",
+      });
+      clearCart();
+      setDiscount(0);
+      setCouponCode("");
+      navigate("/dashboard/orders");
+    } catch (e: any) {
+      console.error("Checkout error:", e);
+      toast({
+        title: "Could not place order",
+        description: e?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setPlacing(false);
+    }
   };
 
   if (items.length === 0) {
@@ -164,7 +216,7 @@ const CartPage = () => {
                   <Tag className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Try: WEEKEND30</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">No active codes right now</p>
             </div>
 
             {/* Totals */}
@@ -194,13 +246,23 @@ const CartPage = () => {
               variant="accent"
               className="w-full h-11 md:h-12"
               onClick={handleCheckout}
+              disabled={placing}
             >
-              <CreditCard className="h-4 w-4 md:h-5 md:w-5 mr-2" />
-              Checkout
+              {placing ? (
+                <>
+                  <Loader2 className="h-4 w-4 md:h-5 md:w-5 mr-2 animate-spin" />
+                  Placing Order...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                  Place Order (Cash on Delivery)
+                </>
+              )}
             </Button>
 
             <p className="text-[10px] md:text-xs text-muted-foreground text-center mt-3 md:mt-4">
-              Free delivery on orders above ₹5,000
+              Online payment coming soon. For now, pay on delivery.
             </p>
           </div>
         </div>

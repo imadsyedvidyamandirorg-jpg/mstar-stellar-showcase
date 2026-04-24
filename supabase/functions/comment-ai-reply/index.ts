@@ -11,8 +11,8 @@ serve(async (req) => {
 
   try {
     const { comment_id, comment_text, product_name } = await req.json();
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-    if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -20,36 +20,26 @@ serve(async (req) => {
 
     const systemContent = `You are a friendly customer service representative for MStar Mobile, a smartphone shop in Palanpur, Gujarat. Reply to customer reviews naturally and warmly like a real human would. Keep it short (1-2 sentences). Never reveal you are AI. Be thankful, helpful, and professional. If they mention issues, empathize and offer help. The product being reviewed is: ${product_name || "a product"}.`;
 
-    const models = [
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "meta-llama/llama-3.1-8b-instruct:free",
-      "google/gemma-3-12b-it:free",
-    ];
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: comment_text },
+        ],
+      }),
+    });
 
-    let response: Response | null = null;
-    for (const model of models) {
-      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemContent },
-            { role: "user", content: comment_text },
-          ],
-        }),
-      });
-      if (r.ok) { response = r; break; }
-      console.error(`Model ${model} failed:`, r.status);
-    }
-
-    if (!response || !response.ok) {
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Lovable AI error:", response.status, errText);
       return new Response(JSON.stringify({ error: "AI temporarily unavailable" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

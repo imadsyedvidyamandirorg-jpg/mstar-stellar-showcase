@@ -11,8 +11,8 @@ serve(async (req) => {
 
   try {
     const { messages, session_id } = await req.json();
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-    if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     // Fetch all products from DB to give AI context
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -64,38 +64,36 @@ Rules:
 - Keep responses concise but informative
 - Format responses with **bold** for important info and bullet points where appropriate`;
 
-    const models = [
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "meta-llama/llama-3.1-8b-instruct:free",
-      "meta-llama/llama-3.2-3b-instruct:free",
-      "google/gemma-3-12b-it:free",
-    ];
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages,
+        ],
+      }),
+    });
 
-    let response: Response | null = null;
-    for (const model of models) {
-      const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-          ],
-        }),
-      });
-      if (r.ok) { response = r; break; }
-      const errText = await r.text();
-      console.error(`Model ${model} failed (${r.status}):`, errText);
-    }
-
-    if (!response || !response.ok) {
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`Lovable AI error (${response.status}):`, errText);
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Too many requests, please wait a moment." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ error: "AI service temporarily unavailable. Please try again." }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

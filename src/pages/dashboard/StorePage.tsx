@@ -160,7 +160,7 @@ const StorePage = () => {
                 {/* Rating */}
                 {product.stock !== undefined && (
                   <p className={`text-xs mt-1 ${product.stock > 0 ? "text-green-600" : "text-destructive font-medium"}`}>
-                    {product.stock > 0 ? `In Stock (${product.stock})` : "Out of Stock"}
+                    {product.stock > 0 ? "In Stock" : "Out of Stock"}
                   </p>
                 )}
 

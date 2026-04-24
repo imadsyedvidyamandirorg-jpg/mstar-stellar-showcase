@@ -171,7 +171,7 @@ const ProductPage = () => {
 
           <div className="flex flex-wrap gap-2">
             {product.stock > 0 ? (
-              <Badge variant="outline" className="text-green-600 border-green-600/30">In Stock ({product.stock})</Badge>
+              <Badge variant="outline" className="text-green-600 border-green-600/30">In Stock</Badge>
             ) : (
               <Badge variant="destructive">Out of Stock</Badge>
             )}

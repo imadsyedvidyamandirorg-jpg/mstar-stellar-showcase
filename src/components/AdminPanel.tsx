@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera } from "lucide-react";
+import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera, Sparkles, Loader2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";

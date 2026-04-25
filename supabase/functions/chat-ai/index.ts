@@ -29,8 +29,10 @@ serve(async (req) => {
       .select("title, description, discount_percent")
       .eq("is_active", true);
 
-    const productList = (products || []).map((p: any) =>
-      `- ${p.name} (${p.brand}) - ₹${p.price}${p.original_price ? ` (was ₹${p.original_price})` : ""} - Stock: ${p.stock}${p.emi_available ? " - EMI Available" : ""}${p.is_new_arrival ? " - NEW" : ""}${p.is_bestseller ? " - BESTSELLER" : ""}${p.description ? ` - ${p.description}` : ""}`
+    // Compact catalog (full details kept internally; AI is told NOT to dump everything)
+    const productNames = (products || []).map((p: any) => `- ${p.name}${p.brand ? ` (${p.brand})` : ""}`).join("\n");
+    const productDetails = (products || []).map((p: any) =>
+      `${p.name}|brand:${p.brand || "-"}|category:${p.category || "-"}|price:₹${p.price}${p.original_price ? `|was:₹${p.original_price}` : ""}|inStock:${(p.stock ?? 0) > 0 ? "yes" : "no"}${p.emi_available ? "|EMI" : ""}${p.is_new_arrival ? "|NEW" : ""}${p.is_bestseller ? "|BESTSELLER" : ""}${p.description ? `|desc:${p.description}` : ""}`
     ).join("\n");
 
     const offerList = (offers || []).map((o: any) =>
@@ -48,21 +50,23 @@ Shop Details:
 - Hours: Mon-Sun, 10:00 AM - 8:00 PM
 - Services: Smartphone sales, Exchange, Repairs, Accessories
 
-Current Products Available:
-${productList || "No products listed yet."}
+Current Products Available (NAMES ONLY — show this list when the user asks "what products do you have"):
+${productNames || "No products listed yet."}
+
+Detailed catalog (use ONLY when the user asks specifically about a product by name — never dump this whole list):
+${productDetails || "—"}
 
 Current Offers:
 ${offerList || "No active offers right now."}
 
 Rules:
-- Only provide information about MStar Mobile shop and its products
-- Be helpful, friendly, and professional
-- If asked about products not in our catalog, say we don't carry them but can check availability
-- Always speak positively about the shop
-- If someone asks unrelated questions, politely redirect to shop-related topics
-- Use emojis occasionally to be friendly
-- Keep responses concise but informative
-- Format responses with **bold** for important info and bullet points where appropriate`;
+- Only provide information about MStar Mobile shop and its products.
+- When the user asks "what products do you have" / "show available products" / similar, reply with ONLY the product names list and ask which one they want to know more about. Do NOT dump prices, descriptions, or full details upfront.
+- NEVER mention exact stock numbers or counts. Only say "In stock" or "Out of stock" if asked.
+- When the user asks about a SPECIFIC product (by name), give the full info (price, brand, key features, EMI availability, in-stock status).
+- If asked about products not in our catalog, say we don't carry them but can check availability.
+- Be helpful, friendly, professional. Use emojis occasionally.
+- Keep replies concise. Use **bold** and bullet points when useful.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

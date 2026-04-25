@@ -407,7 +407,15 @@ const OrdersManager = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    fetchOrders();
+    // Realtime: refresh whenever a new order comes in
+    const channel = supabase
+      .channel("admin-orders-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchOrders())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const updateStatus = async (orderId: string, status: string) => {
     await supabase.from("orders").update({ status }).eq("id", orderId);

@@ -636,14 +636,29 @@ const PostsManager = () => {
   const [caption, setCaption] = useState("");
 
   const handleUpload = async (file: File) => {
-    const filePath = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("post-images").upload(filePath, file);
+    const FIFTY_MB = 50 * 1024 * 1024;
+    if (file.size > FIFTY_MB) {
+      toast({ title: "Image too large", description: "Post images must be smaller than 50 MB.", variant: "destructive" });
+      return;
+    }
+    const safe = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const filePath = `${Date.now()}-${safe}`;
+    const { error } = await supabase.storage
+      .from("post-images")
+      .upload(filePath, file, { contentType: file.type });
     if (error) {
-      toast({ title: "Upload failed", variant: "destructive" });
+      const friendly = /row-level security/i.test(error.message)
+        ? "Permission denied. Please sign in again."
+        : error.message;
+      toast({ title: "Upload failed", description: friendly, variant: "destructive" });
       return;
     }
     const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(filePath);
-    await supabase.from("posts").insert({ images: [urlData.publicUrl], caption });
+    const { error: insErr } = await supabase.from("posts").insert({ images: [urlData.publicUrl], caption });
+    if (insErr) {
+      toast({ title: "Post save failed", description: insErr.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Post created!" });
     setCaption("");
     fetchPosts();

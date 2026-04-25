@@ -122,7 +122,18 @@ const DashboardNav = () => {
 
         {/* Mobile Nav */}
         {mobileOpen && (
-          <div className="lg:hidden py-3 border-t border-mstar-gray/20 animate-slide-up">
+          <div className="lg:hidden py-3 border-t border-mstar-gray/20 animate-slide-up space-y-3">
+            {/* Mobile search (also unlocks admin panel) */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchValue}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="h-10 w-full bg-mstar-dark/50 border border-mstar-gray/20 rounded-lg pl-8 pr-3 text-sm text-primary-foreground placeholder:text-primary-foreground/30 focus:outline-none focus:border-accent/50"
+              />
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {navItems.map((item) => (
                 <Link

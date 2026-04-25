@@ -473,6 +473,7 @@ const ReelsManager = () => {
   const [reels, setReels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<string>("");
   const { toast } = useToast();
   const [caption, setCaption] = useState("");
   const [pendingVideo, setPendingVideo] = useState<File | null>(null);
@@ -493,23 +494,37 @@ const ReelsManager = () => {
       toast({ title: "Please select a video", variant: "destructive" });
       return;
     }
+    const FIVE_GB = 5 * 1024 * 1024 * 1024;
+    if (pendingVideo.size > FIVE_GB) {
+      toast({ title: "Video too large", description: "Reels must be smaller than 5 GB.", variant: "destructive" });
+      return;
+    }
     setUploading(true);
+    setProgress("Uploading video...");
     try {
-      const videoPath = `${Date.now()}-${pendingVideo.name}`;
-      const { error: vErr } = await supabase.storage.from("reel-videos").upload(videoPath, pendingVideo);
+      const safeName = pendingVideo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const videoPath = `${Date.now()}-${safeName}`;
+      const { error: vErr } = await supabase.storage
+        .from("reel-videos")
+        .upload(videoPath, pendingVideo, { contentType: pendingVideo.type, upsert: false });
       if (vErr) throw vErr;
       const { data: vUrl } = supabase.storage.from("reel-videos").getPublicUrl(videoPath);
 
       let thumbnail_url: string | null = null;
       if (pendingThumb) {
-        const thumbPath = `thumb-${Date.now()}-${pendingThumb.name}`;
-        const { error: tErr } = await supabase.storage.from("reel-videos").upload(thumbPath, pendingThumb);
+        setProgress("Uploading thumbnail...");
+        const safeThumb = pendingThumb.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const thumbPath = `thumb-${Date.now()}-${safeThumb}`;
+        const { error: tErr } = await supabase.storage
+          .from("reel-videos")
+          .upload(thumbPath, pendingThumb, { contentType: pendingThumb.type });
         if (!tErr) {
           const { data: tUrl } = supabase.storage.from("reel-videos").getPublicUrl(thumbPath);
           thumbnail_url = tUrl.publicUrl;
         }
       }
 
+      setProgress("Saving reel...");
       const { error: insertErr } = await supabase.from("reels").insert({
         video_url: vUrl.publicUrl,
         thumbnail_url,
@@ -524,9 +539,16 @@ const ReelsManager = () => {
       setThumbPreview("");
       fetchReels();
     } catch (e: any) {
-      toast({ title: "Upload failed", description: e?.message || "Try again", variant: "destructive" });
+      const msg = e?.message || String(e);
+      const friendly = /Failed to fetch|network|NetworkError/i.test(msg)
+        ? "Network issue while uploading. Check your connection and try again."
+        : /row-level security/i.test(msg)
+        ? "Permission denied. Please log out and back in."
+        : msg;
+      toast({ title: "Upload failed", description: friendly, variant: "destructive" });
     } finally {
       setUploading(false);
+      setProgress("");
     }
   };
 
@@ -571,7 +593,7 @@ const ReelsManager = () => {
           </label>
         </div>
         <Button size="sm" onClick={handleUpload} disabled={uploading || !pendingVideo} className="w-full">
-          {uploading ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Uploading...</> : <><Plus className="h-4 w-4 mr-1" /> Publish Reel</>}
+          {uploading ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {progress || "Uploading..."}</> : <><Plus className="h-4 w-4 mr-1" /> Publish Reel</>}
         </Button>
       </div>
       {reels.map((reel) => (

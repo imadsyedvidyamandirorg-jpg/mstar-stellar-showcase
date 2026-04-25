@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Instagram, Heart, MessageCircle, Loader2, X, Send, Volume2, VolumeX } from "lucide-react";
+import { Play, Instagram, Heart, MessageCircle, Loader2, X, Send, Volume2, VolumeX, Share2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,7 @@ const ReelsPage = () => {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [likedReels, setLikedReels] = useState<Set<string>>(new Set());
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -77,15 +77,35 @@ const ReelsPage = () => {
   const addComment = async () => {
     if (!user) { toast({ title: "Please sign in to comment", variant: "destructive" }); return; }
     if (!newComment.trim() || !playingReel) return;
-    const { error } = await supabase.from("reel_comments").insert({
+    const text = newComment.trim();
+    const { data: inserted, error } = await supabase.from("reel_comments").insert({
       reel_id: playingReel.id,
       user_id: user.id,
-      content: newComment.trim(),
-    });
+      content: text,
+    }).select().single();
     if (!error) {
       setNewComment("");
       fetchComments(playingReel.id);
+      // Trigger AI auto-reply (best-effort)
+      if (inserted?.id) {
+        supabase.functions.invoke("comment-ai-reply", {
+          body: { comment_id: inserted.id, comment_text: text, product_name: playingReel.caption || "this reel", target: "reel" },
+        }).then(() => fetchComments(playingReel.id)).catch(() => {});
+      }
     }
+  };
+
+  const handleShare = async (reelId: string, caption: string) => {
+    const url = `https://mstar-mobile.vercel.app/dashboard/reels#${reelId}`;
+    const data = { title: "MStar Mobile Reel", text: caption || "Watch this reel on MStar Mobile!", url };
+    try {
+      if (navigator.share) {
+        await navigator.share(data);
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ title: "Reel link copied!", description: "Share it with your friends." });
+      }
+    } catch {}
   };
 
   return (
@@ -130,6 +150,7 @@ const ReelsPage = () => {
             {reels.map((reel) => (
               <div
                 key={reel.id}
+                id={reel.id}
                 onClick={() => openReel(reel)}
                 className="group relative aspect-[9/16] bg-mstar-dark rounded-2xl overflow-hidden border border-mstar-gray/20 hover:border-accent/50 transition-all cursor-pointer"
               >

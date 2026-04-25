@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Package, Loader2, Clock, CheckCircle, Truck, XCircle } from "lucide-react";
+import { ArrowLeft, Package, Loader2, Clock, CheckCircle, Truck, XCircle, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(price);
@@ -21,34 +23,44 @@ const OrdersPage = () => {
   const [orderItems, setOrderItems] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  const fetchOrders = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    setOrders(data || []);
+    if (data && data.length > 0) {
+      const ids = data.map((o: any) => o.id);
+      const { data: items } = await supabase.from("order_items").select("*").in("order_id", ids);
+      const grouped: Record<string, any[]> = {};
+      (items || []).forEach((item: any) => {
+        if (!grouped[item.order_id]) grouped[item.order_id] = [];
+        grouped[item.order_id].push(item);
+      });
+      setOrderItems(grouped);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!user) return;
-    const fetchOrders = async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      setOrders(data || []);
-
-      if (data && data.length > 0) {
-        const ids = data.map((o: any) => o.id);
-        const { data: items } = await supabase
-          .from("order_items")
-          .select("*")
-          .in("order_id", ids);
-        const grouped: Record<string, any[]> = {};
-        (items || []).forEach((item: any) => {
-          if (!grouped[item.order_id]) grouped[item.order_id] = [];
-          grouped[item.order_id].push(item);
-        });
-        setOrderItems(grouped);
-      }
-      setLoading(false);
-    };
     fetchOrders();
   }, [user]);
+
+  const cancelOrder = async (orderId: string) => {
+    if (!confirm("Cancel this order?")) return;
+    const { error } = await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
+    if (error) {
+      toast({ title: "Could not cancel", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Order cancelled" });
+    fetchOrders();
+  };
 
   if (loading) {
     return (
@@ -115,6 +127,17 @@ const OrdersPage = () => {
                   <span className="text-sm text-muted-foreground">Total</span>
                   <span className="text-base font-bold text-foreground">{formatPrice(order.total_amount)}</span>
                 </div>
+
+                {order.status === "pending" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-destructive hover:bg-destructive/10"
+                    onClick={() => cancelOrder(order.id)}
+                  >
+                    <X className="h-4 w-4 mr-1" /> Cancel Order
+                  </Button>
+                )}
               </div>
             );
           })}

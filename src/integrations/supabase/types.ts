@@ -478,6 +478,7 @@ export type Database = {
       }
       reel_comments: {
         Row: {
+          ai_reply: string | null
           content: string
           created_at: string
           id: string
@@ -485,6 +486,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_reply?: string | null
           content: string
           created_at?: string
           id?: string
@@ -492,6 +494,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_reply?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -567,6 +570,30 @@ export type Database = {
           likes_count?: number | null
           thumbnail_url?: string | null
           video_url?: string
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }

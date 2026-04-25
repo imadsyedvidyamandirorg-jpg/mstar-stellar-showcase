@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { comment_id, comment_text, product_name } = await req.json();
+    const { comment_id, comment_text, product_name, target } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -47,7 +47,8 @@ serve(async (req) => {
     const reply = data.choices?.[0]?.message?.content || "";
 
     if (reply && comment_id) {
-      await supabase.from("product_comments").update({ ai_reply: reply }).eq("id", comment_id);
+      const table = target === "reel" ? "reel_comments" : "product_comments";
+      await supabase.from(table).update({ ai_reply: reply }).eq("id", comment_id);
     }
 
     return new Response(JSON.stringify({ reply }), {

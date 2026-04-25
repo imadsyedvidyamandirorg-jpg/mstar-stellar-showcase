@@ -1,0 +1,1 @@
+ALTER TABLE public.reel_comments ADD COLUMN IF NOT EXISTS ai_reply TEXT;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Instagram, Heart, MessageCircle, Loader2, X, Send, Volume2, VolumeX } from "lucide-react";
+import { Play, Instagram, Heart, MessageCircle, Loader2, X, Send, Volume2, VolumeX, Share2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,7 @@ const ReelsPage = () => {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [likedReels, setLikedReels] = useState<Set<string>>(new Set());
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -77,15 +77,35 @@ const ReelsPage = () => {
   const addComment = async () => {
     if (!user) { toast({ title: "Please sign in to comment", variant: "destructive" }); return; }
     if (!newComment.trim() || !playingReel) return;
-    const { error } = await supabase.from("reel_comments").insert({
+    const text = newComment.trim();
+    const { data: inserted, error } = await supabase.from("reel_comments").insert({
       reel_id: playingReel.id,
       user_id: user.id,
-      content: newComment.trim(),
-    });
+      content: text,
+    }).select().single();
     if (!error) {
       setNewComment("");
       fetchComments(playingReel.id);
+      // Trigger AI auto-reply (best-effort)
+      if (inserted?.id) {
+        supabase.functions.invoke("comment-ai-reply", {
+          body: { comment_id: inserted.id, comment_text: text, product_name: playingReel.caption || "this reel", target: "reel" },
+        }).then(() => fetchComments(playingReel.id)).catch(() => {});
+      }
     }
+  };
+
+  const handleShare = async (reelId: string, caption: string) => {
+    const url = `https://mstar-mobile.vercel.app/dashboard/reels#${reelId}`;
+    const data = { title: "MStar Mobile Reel", text: caption || "Watch this reel on MStar Mobile!", url };
+    try {
+      if (navigator.share) {
+        await navigator.share(data);
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ title: "Reel link copied!", description: "Share it with your friends." });
+      }
+    } catch {}
   };
 
   return (
@@ -130,6 +150,7 @@ const ReelsPage = () => {
             {reels.map((reel) => (
               <div
                 key={reel.id}
+                id={reel.id}
                 onClick={() => openReel(reel)}
                 className="group relative aspect-[9/16] bg-mstar-dark rounded-2xl overflow-hidden border border-mstar-gray/20 hover:border-accent/50 transition-all cursor-pointer"
               >
@@ -175,6 +196,16 @@ const ReelsPage = () => {
                 loop
                 muted={muted}
                 playsInline
+                ref={(el) => {
+                  if (!el) return;
+                  // Try to play with sound; if blocked, fall back to muted autoplay.
+                  el.muted = muted;
+                  el.play().catch(() => {
+                    el.muted = true;
+                    setMuted(true);
+                    el.play().catch(() => {});
+                  });
+                }}
                 onClick={(e) => { e.stopPropagation(); (e.currentTarget as HTMLVideoElement).paused ? (e.currentTarget as HTMLVideoElement).play() : (e.currentTarget as HTMLVideoElement).pause(); }}
               />
 
@@ -193,6 +224,10 @@ const ReelsPage = () => {
                   <MessageCircle className="h-7 w-7 text-white" />
                   <span className="text-white text-xs font-medium">{comments.length}</span>
                 </div>
+                <button onClick={() => handleShare(playingReel.id, playingReel.caption || "")} className="flex flex-col items-center gap-1">
+                  <Share2 className="h-7 w-7 text-white" />
+                  <span className="text-white text-xs font-medium">Share</span>
+                </button>
               </div>
 
               {/* Bottom info gradient */}
@@ -211,23 +246,39 @@ const ReelsPage = () => {
             <div className="hidden md:flex flex-col w-80 bg-card rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <h3 className="font-semibold text-foreground text-sm">Comments ({comments.length})</h3>
-                <button onClick={() => toggleLike(playingReel.id)} className="flex items-center gap-1.5">
-                  <Heart className={`h-5 w-5 transition-colors ${likedReels.has(playingReel.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
-                  <span className="text-sm text-foreground font-medium">{playingReel.likes_count || 0}</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => toggleLike(playingReel.id)} className="flex items-center gap-1.5">
+                    <Heart className={`h-5 w-5 transition-colors ${likedReels.has(playingReel.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+                    <span className="text-sm text-foreground font-medium">{playingReel.likes_count || 0}</span>
+                  </button>
+                  <button onClick={() => handleShare(playingReel.id, playingReel.caption || "")} title="Share" className="text-muted-foreground hover:text-foreground">
+                    <Share2 className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {comments.length === 0 ? (
                   <p className="text-muted-foreground text-sm text-center py-8">Be the first to comment!</p>
                 ) : comments.map((c) => (
-                  <div key={c.id} className="flex gap-2">
-                    <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold text-accent">U</span>
+                  <div key={c.id} className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-bold text-accent">U</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-foreground">{c.content}</p>
+                        <p className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleString()}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-foreground">{c.content}</p>
-                      <p className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</p>
-                    </div>
+                    {c.ai_reply && (
+                      <div className="ml-10 flex gap-2 bg-accent/5 rounded-lg p-2 border-l-2 border-accent/40">
+                        <Sparkles className="h-3.5 w-3.5 text-accent flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-[11px] font-semibold text-accent mb-0.5">MStar Mobile</p>
+                          <p className="text-xs text-foreground">{c.ai_reply}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

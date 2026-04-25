@@ -2,8 +2,10 @@ import { Outlet } from "react-router-dom";
 import DashboardNav from "@/components/DashboardNav";
 import Footer from "@/components/Footer";
 import ChatBot from "@/components/ChatBot";
+import { useWebNotifications } from "@/hooks/use-web-notifications";
 
 const DashboardLayout = () => {
+  useWebNotifications();
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav />

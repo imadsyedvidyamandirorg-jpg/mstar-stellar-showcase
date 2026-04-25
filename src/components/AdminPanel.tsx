@@ -1084,10 +1084,22 @@ const PanoramaManager = () => {
 
   const handleUpload = async (file: File) => {
     setUploading(true);
-    const filePath = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("panorama-images").upload(filePath, file);
+    const HUNDRED_MB = 100 * 1024 * 1024;
+    if (file.size > HUNDRED_MB) {
+      toast({ title: "Image too large", description: "Panoramas must be smaller than 100 MB.", variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const safe = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const filePath = `${Date.now()}-${safe}`;
+    const { error } = await supabase.storage
+      .from("panorama-images")
+      .upload(filePath, file, { contentType: file.type });
     if (error) {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      const friendly = /row-level security/i.test(error.message)
+        ? "Permission denied. Please sign in again."
+        : error.message;
+      toast({ title: "Upload failed", description: friendly, variant: "destructive" });
       setUploading(false);
       return;
     }

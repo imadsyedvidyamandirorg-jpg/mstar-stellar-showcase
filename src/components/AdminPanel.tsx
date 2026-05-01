@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera, Sparkles, Loader2, ImageIcon } from "lucide-react";
+import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera, Sparkles, Loader2, ImageIcon, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "notifications" | "alerts" | "analytics" | "panorama";
+type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "banners" | "notifications" | "alerts" | "analytics" | "panorama";
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -22,6 +22,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
     { id: "reels" as Tab, label: "Reels", icon: Film },
     { id: "posts" as Tab, label: "Posts", icon: Image },
     { id: "offers" as Tab, label: "Offers", icon: Gift },
+    { id: "banners" as Tab, label: "Banners", icon: Layers },
     { id: "notifications" as Tab, label: "Push Alerts", icon: Bell },
     { id: "alerts" as Tab, label: "Order Alerts", icon: Volume2 },
     { id: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
@@ -72,6 +73,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
           {activeTab === "reels" && <ReelsManager />}
           {activeTab === "posts" && <PostsManager />}
           {activeTab === "offers" && <OffersManager />}
+          {activeTab === "banners" && <BannersManager />}
           {activeTab === "notifications" && <NotificationsManager />}
           {activeTab === "alerts" && <OrderAlertsManager />}
           {activeTab === "analytics" && <AnalyticsDashboard />}

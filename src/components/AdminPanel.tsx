@@ -1149,3 +1149,128 @@ const PanoramaManager = () => {
     </div>
   );
 };
+// ==================== BANNERS MANAGER ====================
+const BannersManager = () => {
+  const [banners, setBanners] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const { toast } = useToast();
+
+  const fetchBanners = async () => {
+    const { data } = await supabase
+      .from("banners")
+      .select("*")
+      .order("position", { ascending: true })
+      .order("created_at", { ascending: false });
+    setBanners(data || []);
+  };
+
+  useEffect(() => { fetchBanners(); }, []);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    const TEN_MB = 10 * 1024 * 1024;
+    if (file.size > TEN_MB) {
+      toast({ title: "Image too large", description: "Banners must be smaller than 10 MB.", variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const safe = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const filePath = `${Date.now()}-${safe}`;
+    const { error } = await supabase.storage
+      .from("banner-images")
+      .upload(filePath, file, { contentType: file.type });
+    if (error) {
+      const friendly = /row-level security/i.test(error.message)
+        ? "Permission denied. Please sign in again."
+        : error.message;
+      toast({ title: "Upload failed", description: friendly, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("banner-images").getPublicUrl(filePath);
+    const nextPos = (banners[banners.length - 1]?.position ?? -1) + 1;
+    const { error: insertErr } = await supabase.from("banners").insert({
+      image_url: urlData.publicUrl,
+      link_url: linkUrl.trim() || null,
+      title: title.trim() || null,
+      position: nextPos,
+    });
+    if (insertErr) {
+      toast({ title: "Save failed", description: insertErr.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    toast({ title: "Banner uploaded!" });
+    setLinkUrl("");
+    setTitle("");
+    setUploading(false);
+    fetchBanners();
+  };
+
+  const deleteBanner = async (id: string) => {
+    const { error } = await supabase.from("banners").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Banner removed" });
+    fetchBanners();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-semibold text-foreground">Homepage Banners</h3>
+        <p className="text-xs text-muted-foreground">Upload wide images (recommended 1600×500). Banners auto-rotate on the dashboard.</p>
+      </div>
+      <div className="bg-muted rounded-xl p-4 space-y-3">
+        <Input placeholder="Title (optional, e.g., Diwali Sale)" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Input
+          placeholder="Click link (optional, e.g., /dashboard/store or https://...)"
+          value={linkUrl}
+          onChange={(e) => setLinkUrl(e.target.value)}
+        />
+        <label className="cursor-pointer inline-block">
+          <Button size="sm" variant="outline" asChild disabled={uploading}>
+            <span>
+              <ImageIcon className="h-4 w-4 mr-1" /> {uploading ? "Uploading..." : "Upload Banner Image"}
+            </span>
+          </Button>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.[0]) handleUpload(e.target.files[0]);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+
+      {banners.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-6">No banners yet. Upload one above.</p>
+      )}
+
+      <div className="space-y-3">
+        {banners.map((b) => (
+          <div key={b.id} className="flex items-center gap-3 bg-muted rounded-xl p-3">
+            <img src={b.image_url} alt="" className="w-28 h-14 rounded-lg object-cover flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{b.title || "Untitled banner"}</p>
+              {b.link_url && (
+                <p className="text-xs text-muted-foreground truncate">→ {b.link_url}</p>
+              )}
+              <p className="text-[10px] text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</p>
+            </div>
+            <button onClick={() => deleteBanner(b.id)} className="p-2 hover:bg-background rounded-lg" title="Delete">
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

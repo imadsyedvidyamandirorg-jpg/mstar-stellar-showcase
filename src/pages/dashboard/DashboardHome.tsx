@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import SubscribeButton from "@/components/SubscribeButton";
 import BannerCarousel from "@/components/BannerCarousel";
+import CategoryStrip from "@/components/CategoryStrip";
 import { motion } from "framer-motion";
 
 const DroneModel = lazy(() => import("@/components/DroneModel"));
@@ -31,19 +32,22 @@ const DashboardHome = () => {
   }, []);
 
   const quickLinks = [
-    { name: "Reels", icon: Film, href: "/dashboard/reels", color: "bg-pink-500" },
-    { name: "Posts", icon: Image, href: "/dashboard/posts", color: "bg-blue-500" },
-    { name: "Alerts", icon: Bell, href: "/dashboard/notifications", color: "bg-yellow-500" },
-    { name: "Offers", icon: Gift, href: "/dashboard/offers", color: "bg-green-500" },
+    { name: "Reels", icon: Film, href: "/dashboard/reels", color: "bg-accent" },
+    { name: "Posts", icon: Image, href: "/dashboard/posts", color: "bg-foreground" },
+    { name: "Alerts", icon: Bell, href: "/dashboard/notifications", color: "bg-accent" },
+    { name: "Offers", icon: Gift, href: "/dashboard/offers", color: "bg-foreground" },
     { name: "Store", icon: ShoppingBag, href: "/dashboard/store", color: "bg-accent" },
-    { name: "360° Tour", icon: Eye, href: "/dashboard/virtual-tour", color: "bg-teal-500" },
-    { name: "Orders", icon: Package, href: "/dashboard/orders", color: "bg-orange-500" },
+    { name: "360° Tour", icon: Eye, href: "/dashboard/virtual-tour", color: "bg-foreground" },
+    { name: "Orders", icon: Package, href: "/dashboard/orders", color: "bg-accent" },
   ];
 
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Banner Carousel */}
       <BannerCarousel />
+
+      {/* Category Strip */}
+      <CategoryStrip />
 
       {/* Welcome Banner */}
       <motion.div

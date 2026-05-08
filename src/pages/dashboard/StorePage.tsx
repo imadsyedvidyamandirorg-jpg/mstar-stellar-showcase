@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ShoppingCart, Heart, Search, Grid3X3, LayoutList, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +12,19 @@ const formatPrice = (price: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(price);
 
 const StorePage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("cat") || "all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const cat = searchParams.get("cat") || "all";
+    setSelectedCategory(cat);
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -84,7 +90,15 @@ const StorePage = () => {
         {categories.map((category) => (
           <button
             key={category.id}
-            onClick={() => setSelectedCategory(category.id)}
+            onClick={() => {
+              setSelectedCategory(category.id);
+              if (category.id === "all") {
+                searchParams.delete("cat");
+              } else {
+                searchParams.set("cat", category.id);
+              }
+              setSearchParams(searchParams, { replace: true });
+            }}
             className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
               selectedCategory === category.id
                 ? "bg-accent text-accent-foreground"

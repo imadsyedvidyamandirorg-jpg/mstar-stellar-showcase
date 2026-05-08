@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import SubscribeButton from "@/components/SubscribeButton";
 import BannerCarousel from "@/components/BannerCarousel";
 import CategoryStrip from "@/components/CategoryStrip";
+import ReelsRow from "@/components/ReelsRow";
+import OffersRow from "@/components/OffersRow";
 import { motion } from "framer-motion";
 
 const DroneModel = lazy(() => import("@/components/DroneModel"));
@@ -32,13 +34,13 @@ const DashboardHome = () => {
   }, []);
 
   const quickLinks = [
-    { name: "Reels", icon: Film, href: "/dashboard/reels", color: "bg-accent" },
-    { name: "Posts", icon: Image, href: "/dashboard/posts", color: "bg-foreground" },
-    { name: "Alerts", icon: Bell, href: "/dashboard/notifications", color: "bg-accent" },
-    { name: "Offers", icon: Gift, href: "/dashboard/offers", color: "bg-foreground" },
-    { name: "Store", icon: ShoppingBag, href: "/dashboard/store", color: "bg-accent" },
-    { name: "360° Tour", icon: Eye, href: "/dashboard/virtual-tour", color: "bg-foreground" },
-    { name: "Orders", icon: Package, href: "/dashboard/orders", color: "bg-accent" },
+    { name: "Reels", icon: Film, href: "/dashboard/reels" },
+    { name: "Posts", icon: Image, href: "/dashboard/posts" },
+    { name: "Alerts", icon: Bell, href: "/dashboard/notifications" },
+    { name: "Offers", icon: Gift, href: "/dashboard/offers" },
+    { name: "Store", icon: ShoppingBag, href: "/dashboard/store" },
+    { name: "360° Tour", icon: Eye, href: "/dashboard/virtual-tour" },
+    { name: "Orders", icon: Package, href: "/dashboard/orders" },
   ];
 
   return (
@@ -120,14 +122,47 @@ const DashboardHome = () => {
                 to={link.href}
                 className="group flex flex-col items-center gap-2 p-3 md:p-5 bg-card rounded-xl md:rounded-2xl shadow-elegant hover:shadow-deep transition-all hover:-translate-y-1"
               >
-                <div className={`w-10 h-10 md:w-12 md:h-12 ${link.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  <link.icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-accent rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <link.icon className="h-5 w-5 md:h-6 md:w-6 text-accent-foreground" />
                 </div>
                 <span className="font-medium text-foreground text-xs md:text-sm">{link.name}</span>
               </Link>
             </motion.div>
           ))}
         </div>
+      </motion.div>
+
+      {/* Live Offers */}
+      <OffersRow />
+
+      {/* Shorts / Reels */}
+      <ReelsRow />
+
+      {/* 360° Tour Promo */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.35 }}
+      >
+        <Link
+          to="/dashboard/virtual-tour"
+          className="block relative overflow-hidden rounded-2xl bg-gradient-to-r from-foreground via-foreground to-accent p-5 md:p-7 shadow-elegant hover:shadow-deep transition-all group"
+        >
+          <div className="relative z-10 flex items-center justify-between gap-4">
+            <div className="text-primary-foreground">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Eye className="h-4 w-4 md:h-5 md:w-5" />
+                <span className="text-[10px] md:text-xs uppercase tracking-widest opacity-80">Immersive</span>
+              </div>
+              <h3 className="text-lg md:text-2xl font-bold mb-1">Take a 360° Tour</h3>
+              <p className="text-xs md:text-sm opacity-80">Walk through our store from anywhere</p>
+            </div>
+            <div className="hidden sm:flex w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/15 items-center justify-center group-hover:scale-110 transition-transform">
+              <Eye className="h-6 w-6 md:h-8 md:w-8 text-primary-foreground" />
+            </div>
+          </div>
+          <div className="absolute -right-10 -bottom-10 w-40 h-40 rounded-full bg-accent/30 blur-3xl" />
+        </Link>
       </motion.div>
 
       {/* Trending Products */}

@@ -54,7 +54,7 @@ const BannerCarousel = () => {
   const scrollTo = useCallback((idx: number) => emblaApi?.scrollTo(idx), [emblaApi]);
 
   if (loading) {
-    return <div className="aspect-[16/6] md:aspect-[16/5] w-full rounded-2xl md:rounded-3xl bg-muted animate-pulse" />;
+    return <div className="aspect-[16/8] sm:aspect-[16/6] md:aspect-[16/5] w-full rounded-2xl md:rounded-3xl bg-muted animate-pulse" />;
   }
   if (banners.length === 0) return null;
 
@@ -67,7 +67,7 @@ const BannerCarousel = () => {
         loading="lazy"
       />
     );
-    const wrapClass = "relative block w-full aspect-[16/6] md:aspect-[16/5] overflow-hidden rounded-2xl md:rounded-3xl";
+    const wrapClass = "relative block w-full aspect-[16/8] sm:aspect-[16/6] md:aspect-[16/5] overflow-hidden rounded-2xl md:rounded-3xl";
     if (b.link_url) {
       const isExternal = /^https?:\/\//i.test(b.link_url);
       if (isExternal) {
@@ -93,7 +93,7 @@ const BannerCarousel = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="relative group"
     >
-      <div className="overflow-hidden rounded-2xl md:rounded-3xl shadow-deep" ref={emblaRef}>
+      <div className="overflow-hidden rounded-2xl md:rounded-3xl shadow-deep touch-pan-y" ref={emblaRef}>
         <div className="flex">
           {banners.map((b) => (
             <div key={b.id} className="flex-[0_0_100%] min-w-0">

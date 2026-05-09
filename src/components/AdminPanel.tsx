@@ -10,10 +10,11 @@ type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "banners" | "n
 
 interface AdminPanelProps {
   onClose: () => void;
+  initialTab?: Tab;
 }
 
-const AdminPanel = ({ onClose }: AdminPanelProps) => {
-  const [activeTab, setActiveTab] = useState<Tab>("products");
+const AdminPanel = ({ onClose, initialTab = "products" }: AdminPanelProps) => {
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const { toast } = useToast();
 
   const tabs = [

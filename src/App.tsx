@@ -19,6 +19,7 @@ import CartPage from "./pages/dashboard/CartPage";
 import ProductPage from "./pages/dashboard/ProductPage";
 import VirtualTourPage from "./pages/dashboard/VirtualTourPage";
 import OrdersPage from "./pages/dashboard/OrdersPage";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/auth" element={<AuthPage />} />

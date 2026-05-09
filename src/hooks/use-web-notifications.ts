@@ -38,16 +38,44 @@ const playBeep = (pattern: "notif" | "order") => {
   } catch {}
 };
 
-const showNotif = (title: string, body: string, tag: string) => {
+const speak = (text: string) => {
+  try {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95;
+    u.pitch = 1;
+    u.volume = 1;
+    u.lang = "en-IN";
+    window.speechSynthesis.speak(u);
+  } catch {}
+};
+
+const showNotif = (
+  title: string,
+  body: string,
+  tag: string,
+  onClickUrl?: string
+) => {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   try {
-    new Notification(title, {
+    const n = new Notification(title, {
       body,
       tag,
       icon: "/favicon.ico",
       badge: "/favicon.ico",
+      requireInteraction: !!onClickUrl,
     });
+    if (onClickUrl) {
+      n.onclick = () => {
+        try {
+          window.focus();
+          window.location.href = onClickUrl;
+        } catch {}
+        n.close();
+      };
+    }
   } catch {}
 };
 
@@ -92,13 +120,40 @@ export const useWebNotifications = () => {
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "orders" },
-          (payload) => {
+          async (payload) => {
             const o: any = payload.new;
             playBeep("order");
+
+            // Fetch ordered items for a richer voice announcement
+            let itemsText = "";
+            try {
+              const { data: items } = await supabase
+                .from("order_items")
+                .select("product_name, quantity")
+                .eq("order_id", o.id);
+              if (items && items.length) {
+                itemsText = items
+                  .map((i: any) => `${i.quantity} ${i.product_name}`)
+                  .join(", ");
+              }
+            } catch {}
+
+            const customer = o.delivery_name || "A customer";
+            const phone = o.delivery_phone ? `, phone ${o.delivery_phone}` : "";
+            const city = o.delivery_city ? `, from ${o.delivery_city}` : "";
+            const amount = `Total ${o.total_amount} rupees.`;
+            const spoken =
+              `New order received! ${customer}${phone}${city} ordered ` +
+              (itemsText || `${o.items_count || ""} items`) +
+              `. ${amount} Click the notification to view in admin panel.`;
+
+            speak(spoken);
+
             showNotif(
-              "🛒 New Order!",
-              `${o.delivery_name || "Customer"} — ₹${o.total_amount}`,
-              `order-${o.id}`
+              "🛒 New Order — MStar Mobile",
+              `${customer} • ₹${o.total_amount}${itemsText ? ` • ${itemsText}` : ""}`,
+              `order-${o.id}`,
+              `${window.location.origin}/dashboard?admin=orders`
             );
             // Fire-and-forget email to shop owner
             supabase.functions.invoke("notify-new-order", { body: { order_id: o.id } }).catch(() => {});

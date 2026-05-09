@@ -20,7 +20,7 @@ const Drone = () => {
 
   return (
     <Float speed={2} rotationIntensity={0} floatIntensity={1.2} floatingRange={[-0.15, 0.15]}>
-      <group ref={ref} scale={0.9} position={[0, -0.2, 0]}>
+      <group ref={ref} scale={0.55} position={[0, -0.1, 0]}>
         <primitive object={scene} />
       </group>
     </Float>
@@ -31,7 +31,7 @@ const DroneModel = ({ className = "" }: { className?: string }) => {
   return (
     <div className={className}>
       <Canvas
-        camera={{ position: [3.5, 1.5, 4.5], fov: 38 }}
+        camera={{ position: [4.5, 2, 5.5], fov: 36 }}
         gl={{ antialias: true, alpha: true }}
         dpr={[1, 2]}
       >

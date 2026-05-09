@@ -2,14 +2,13 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const categories = [
-  { name: "Phones", img: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=200&h=200&fit=crop", cat: "smartphones" },
   { name: "Earbuds", img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=200&h=200&fit=crop", cat: "accessories" },
   { name: "Watches", img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&h=200&fit=crop", cat: "accessories" },
   { name: "Speakers", img: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=200&h=200&fit=crop", cat: "accessories" },
-  { name: "Chargers", img: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=200&h=200&fit=crop", cat: "accessories" },
-  { name: "Cables", img: "https://images.unsplash.com/photo-1606293459177-3e6b86d5e9e8?w=200&h=200&fit=crop", cat: "accessories" },
-  { name: "TVs", img: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=200&h=200&fit=crop", cat: "electronics" },
-  { name: "Cameras", img: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=200&h=200&fit=crop", cat: "electronics" },
+  { name: "Headphones", img: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=200&h=200&fit=crop", cat: "accessories" },
+  { name: "Powerbanks", img: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=200&h=200&fit=crop", cat: "accessories" },
+  { name: "Drones", img: "https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=200&h=200&fit=crop", cat: "electronics" },
+  { name: "Hair Dryer", img: "https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=200&h=200&fit=crop", cat: "electronics" },
   { name: "Gaming", img: "https://images.unsplash.com/photo-1592840496694-26d035b52b48?w=200&h=200&fit=crop", cat: "electronics" },
   { name: "Tablets", img: "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=200&h=200&fit=crop", cat: "electronics" },
 ];

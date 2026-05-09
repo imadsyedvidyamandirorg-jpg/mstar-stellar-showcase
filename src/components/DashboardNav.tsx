@@ -1,6 +1,6 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Film, Image, Bell, Gift, ShoppingBag, Home, ShoppingCart, Menu, X, LogOut, Search, LogIn } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,19 @@ const DashboardNav = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [adminInitialTab, setAdminInitialTab] = useState<any>("products");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Open Admin Panel via URL ?admin=<tab> (used by order voice notifications)
+  useEffect(() => {
+    const tab = searchParams.get("admin");
+    if (tab && isAdmin) {
+      setAdminInitialTab(tab);
+      setShowAdminPanel(true);
+      searchParams.delete("admin");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, isAdmin, setSearchParams]);
 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value);
@@ -198,7 +211,7 @@ const DashboardNav = () => {
 
     {/* Admin Panel Modal */}
     {showAdminPanel && (
-      <AdminPanel onClose={() => setShowAdminPanel(false)} />
+      <AdminPanel onClose={() => setShowAdminPanel(false)} initialTab={adminInitialTab} />
     )}
     </>
   );

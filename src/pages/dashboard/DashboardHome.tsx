@@ -34,13 +34,13 @@ const DashboardHome = () => {
   }, []);
 
   const quickLinks = [
-    { name: "Reels", icon: Film, href: "/dashboard/reels" },
-    { name: "Posts", icon: Image, href: "/dashboard/posts" },
-    { name: "Alerts", icon: Bell, href: "/dashboard/notifications" },
-    { name: "Offers", icon: Gift, href: "/dashboard/offers" },
-    { name: "Store", icon: ShoppingBag, href: "/dashboard/store" },
-    { name: "360° Tour", icon: Eye, href: "/dashboard/virtual-tour" },
-    { name: "Orders", icon: Package, href: "/dashboard/orders" },
+    { name: "Reels", icon: Film, href: "/dashboard/reels", color: "bg-pink-500" },
+    { name: "Posts", icon: Image, href: "/dashboard/posts", color: "bg-blue-500" },
+    { name: "Alerts", icon: Bell, href: "/dashboard/notifications", color: "bg-yellow-500" },
+    { name: "Offers", icon: Gift, href: "/dashboard/offers", color: "bg-green-500" },
+    { name: "Store", icon: ShoppingBag, href: "/dashboard/store", color: "bg-accent" },
+    { name: "360° Tour", icon: Eye, href: "/dashboard/virtual-tour", color: "bg-teal-500" },
+    { name: "Orders", icon: Package, href: "/dashboard/orders", color: "bg-orange-500" },
   ];
 
   return (
@@ -122,8 +122,8 @@ const DashboardHome = () => {
                 to={link.href}
                 className="group flex flex-col items-center gap-2 p-3 md:p-5 bg-card rounded-xl md:rounded-2xl shadow-elegant hover:shadow-deep transition-all hover:-translate-y-1"
               >
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-accent rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <link.icon className="h-5 w-5 md:h-6 md:w-6 text-accent-foreground" />
+                <div className={`w-10 h-10 md:w-12 md:h-12 ${link.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-md`}>
+                  <link.icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
                 </div>
                 <span className="font-medium text-foreground text-xs md:text-sm">{link.name}</span>
               </Link>

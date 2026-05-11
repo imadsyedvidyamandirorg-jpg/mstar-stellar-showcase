@@ -1,22 +1,13 @@
-import { Suspense, useRef, useEffect } from "react";
+import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Environment, Float } from "@react-three/drei";
-import { Group, Object3D } from "three";
+import { Group } from "three";
 
 useGLTF.preload("/models/drone.glb");
 
 const Drone = () => {
   const ref = useRef<Group>(null!);
-  const bladesRef = useRef<Object3D | null>(null);
   const { scene } = useGLTF("/models/drone.glb") as any;
-
-  useEffect(() => {
-    scene.traverse((o: Object3D) => {
-      if (o.name && o.name.toLowerCase().includes("blade")) {
-        bladesRef.current = o;
-      }
-    });
-  }, [scene]);
 
   useFrame((state) => {
     if (!ref.current) return;
@@ -24,9 +15,6 @@ const Drone = () => {
     ref.current.rotation.y = Math.sin(t * 0.4) * 0.6;
     ref.current.rotation.z = Math.sin(t * 0.8) * 0.05;
     ref.current.rotation.x = Math.cos(t * 0.6) * 0.05;
-    if (bladesRef.current) {
-      bladesRef.current.rotation.y += 1.4; // fast spin to look like flying
-    }
   });
 
   return (

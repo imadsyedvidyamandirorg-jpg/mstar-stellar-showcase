@@ -17,6 +17,14 @@ const DashboardNav = () => {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [adminInitialTab, setAdminInitialTab] = useState<any>("products");
   const [searchParams, setSearchParams] = useSearchParams();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Open Admin Panel via URL ?admin=<tab> (used by order voice notifications)
   useEffect(() => {
@@ -54,9 +62,15 @@ const DashboardNav = () => {
 
   return (
     <>
-    <nav className="sticky top-0 z-50 hero-gradient border-b border-mstar-gray/20">
+    <nav
+      className={`sticky top-0 z-50 transition-all duration-500 ${
+        scrolled
+          ? "bg-[hsl(var(--mstar-black)/0.65)] backdrop-blur-xl border-b border-white/10 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)]"
+          : "bg-[hsl(var(--mstar-black)/0.25)] backdrop-blur-md border-b border-white/5"
+      }`}
+    >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-14 md:h-16">
+        <div className={`flex items-center justify-between transition-all duration-500 ${scrolled ? "h-12 md:h-14" : "h-14 md:h-16"}`}>
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <img src={mstarLogo} alt="MStar" className="h-8 md:h-10" />

@@ -267,16 +267,20 @@ const StorePage = () => {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-foreground via-foreground to-accent text-primary-foreground p-5 md:p-7"
+        className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-[hsl(var(--mstar-black))] text-primary-foreground p-5 md:p-8"
       >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--accent)/0.4),transparent_55%)]" />
+        <div className="absolute inset-0 opacity-[0.06] mix-blend-overlay" style={{ backgroundImage: "linear-gradient(hsl(0 0% 100% / 0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100% / 0.4) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
         <div className="relative z-10 flex items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] md:text-xs uppercase tracking-widest opacity-80 mb-1">
+            <p className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-white/60 mb-2">
               MStar Store
             </p>
-            <h1 className="text-xl md:text-3xl font-bold">Shop the latest tech</h1>
-            <p className="text-xs md:text-sm opacity-80 mt-1">
-              Free delivery in Botad • COD available • 7-day returns
+            <h1 className="text-2xl md:text-4xl font-semibold tracking-tight">
+              Premium accessories,<br className="hidden sm:block" /> handpicked.
+            </h1>
+            <p className="text-xs md:text-sm text-white/65 mt-2">
+              Free Botad delivery • COD available • 7-day returns
             </p>
           </div>
           <div className="hidden sm:flex flex-col items-end gap-1 text-xs">
@@ -428,7 +432,7 @@ const StorePage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: Math.min(idx * 0.03, 0.3) }}
               whileHover={{ y: -4 }}
-              className="group bg-card rounded-xl md:rounded-2xl overflow-hidden shadow-elegant hover:shadow-deep transition-all border border-border/50 hover:border-accent/40 relative"
+              className="group bg-card rounded-2xl overflow-hidden border border-border/60 hover:border-accent/50 transition-all relative shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_24px_60px_-20px_hsl(var(--accent)/0.35)] hover:-translate-y-1"
             >
               {/* Discount ribbon */}
               {discountPct(product) > 0 && (
@@ -443,12 +447,14 @@ const StorePage = () => {
                 </div>
               )}
               {/* Image */}
-              <Link to={`/dashboard/product/${product.id}`} className="relative aspect-square bg-muted overflow-hidden block">
+              <Link to={`/dashboard/product/${product.id}`} className="relative aspect-square bg-gradient-to-br from-muted to-background overflow-hidden block">
+                {/* Hover light sweep */}
+                <div className="pointer-events-none absolute -inset-x-10 -top-10 h-32 rotate-[18deg] bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 group-hover:translate-x-[60%] transition-all duration-700" />
                 <img
                     src={product.images?.[0] || "/placeholder.svg"}
                     alt={product.name || ""}
                     loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-700 ease-out"
                 />
                 {product.badge && (
                   <Badge className={`absolute top-2 left-2 text-[10px] md:text-xs ${product.badge_color || "bg-accent"} text-white`}>

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
-import { Film, Image, Bell, Gift, ShoppingBag, ArrowRight, TrendingUp, Star, Loader2, Eye, Package } from "lucide-react";
+import { Film, Image, Bell, Gift, ShoppingBag, ArrowRight, TrendingUp, Loader2, Eye, Package, Sparkles, ShieldCheck, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import SubscribeButton from "@/components/SubscribeButton";
@@ -45,63 +45,145 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-6 md:space-y-8">
+      {/* Cinematic Hero */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="relative overflow-hidden rounded-2xl md:rounded-[28px] bg-[hsl(var(--mstar-black))] -mt-2"
+      >
+        {/* Layered background depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--accent)/0.35),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(0_0%_100%/0.06),transparent_60%)]" />
+        <div
+          className="absolute inset-0 opacity-[0.07] mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "linear-gradient(hsl(0 0% 100% / 0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100% / 0.4) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+          }}
+        />
+        {/* Particles */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {[...Array(14)].map((_, i) => (
+            <motion.span
+              key={i}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.7, 0], y: [0, -30, -60] }}
+              transition={{ duration: 6 + (i % 5), repeat: Infinity, delay: i * 0.4, ease: "easeInOut" }}
+              className="absolute w-1 h-1 rounded-full bg-white/60"
+              style={{ left: `${(i * 73) % 100}%`, top: `${20 + ((i * 37) % 70)}%` }}
+            />
+          ))}
+        </div>
+
+        <div className="relative z-10 grid md:grid-cols-[1.1fr_1fr] gap-4 items-center px-5 py-7 md:px-10 md:py-12 lg:px-14 lg:py-16">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 backdrop-blur px-3 py-1 text-[11px] md:text-xs uppercase tracking-[0.18em] text-white/80"
+            >
+              <Sparkles className="h-3 w-3 text-accent" />
+              Premium accessories & smart gadgets
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.25 }}
+              className="mt-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight text-white"
+            >
+              Tech that feels
+              <br />
+              <span className="text-gradient">handcrafted.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.35 }}
+              className="mt-4 md:mt-5 max-w-md text-sm md:text-base text-white/65 leading-relaxed"
+            >
+              Curated audio, smart wearables, drones and lifestyle gadgets — chosen for the people who notice the details.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="mt-6 flex flex-wrap items-center gap-3"
+            >
+              <Link to="/dashboard/store">
+                <Button
+                  variant="accent"
+                  className="h-11 md:h-12 px-5 md:px-6 text-sm md:text-base rounded-full shadow-[0_10px_40px_-10px_hsl(var(--accent)/0.7)] hover:shadow-[0_14px_50px_-10px_hsl(var(--accent)/0.9)] transition-shadow"
+                >
+                  Explore Store
+                  <ArrowRight className="h-4 w-4 md:h-5 md:w-5 ml-2" />
+                </Button>
+              </Link>
+              <Link to="/dashboard/virtual-tour">
+                <Button
+                  variant="outline"
+                  className="h-11 md:h-12 px-5 md:px-6 text-sm md:text-base rounded-full bg-white/5 border-white/20 text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  360° Tour
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.65 }}
+              className="mt-7 md:mt-9 grid grid-cols-3 max-w-md gap-3 md:gap-4"
+            >
+              {[
+                { k: "10k+", v: "Happy customers" },
+                { k: "200+", v: "Curated products" },
+                { k: "4.9★", v: "Avg. rating" },
+              ].map((s) => (
+                <div key={s.v} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur px-3 py-2.5">
+                  <p className="font-display text-lg md:text-2xl text-white leading-none">{s.k}</p>
+                  <p className="mt-1 text-[10px] md:text-[11px] uppercase tracking-wider text-white/55">{s.v}</p>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Drone */}
+          <div className="relative h-56 sm:h-72 md:h-[360px] lg:h-[420px] -mx-2 md:mx-0">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(var(--accent)/0.25),transparent_60%)] blur-2xl" />
+            <Suspense fallback={null}>
+              <DroneModel className="w-full h-full" />
+            </Suspense>
+            <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 w-44 h-3 rounded-full bg-accent/40 blur-2xl" />
+          </div>
+        </div>
+
+        {/* Brand trust strip */}
+        <div className="relative z-10 border-t border-white/10 bg-black/30 backdrop-blur-sm px-5 md:px-10 lg:px-14 py-3 md:py-4">
+          <div className="flex items-center gap-6 md:gap-10 overflow-x-auto no-scrollbar text-[11px] md:text-xs uppercase tracking-[0.2em] text-white/50 font-medium">
+            <span className="flex items-center gap-1.5 shrink-0"><ShieldCheck className="h-3.5 w-3.5 text-accent" /> 100% Genuine</span>
+            <span className="shrink-0">boAt</span>
+            <span className="shrink-0">Noise</span>
+            <span className="shrink-0">JBL</span>
+            <span className="shrink-0">DJI</span>
+            <span className="shrink-0">Realme</span>
+            <span className="flex items-center gap-1.5 shrink-0"><Truck className="h-3.5 w-3.5 text-accent" /> Free Botad delivery</span>
+          </div>
+        </div>
+      </motion.section>
+
       {/* Banner Carousel */}
       <BannerCarousel />
 
       {/* Category Strip */}
       <CategoryStrip />
-
-      {/* Welcome Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-        className="hero-gradient rounded-2xl md:rounded-3xl p-5 md:p-8 lg:p-12 relative overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-transparent" />
-        <div className="relative z-10 grid md:grid-cols-2 gap-4 items-center">
-          <div>
-            <motion.h1
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-primary-foreground mb-2 md:mb-3"
-            >
-              Welcome to MStar! 🌟
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              className="text-primary-foreground/70 text-sm md:text-lg mb-4 md:mb-6 max-w-xl"
-            >
-              Explore smartphones, accessories, and exclusive offers.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.45 }}
-            >
-              <Link to="/dashboard/store">
-                <Button variant="accent" size="default" className="h-10 md:h-12 text-sm md:text-base">
-                  <ShoppingBag className="h-4 w-4 md:h-5 md:w-5 mr-2" />
-                  Shop Now
-                  <ArrowRight className="h-4 w-4 md:h-5 md:w-5 ml-2" />
-                </Button>
-              </Link>
-            </motion.div>
-          </div>
-
-          {/* Flying Drone */}
-          <div className="relative h-44 md:h-60 lg:h-72 -mx-2 md:mx-0">
-            <Suspense fallback={null}>
-              <DroneModel className="w-full h-full" />
-            </Suspense>
-            {/* Soft glow under drone */}
-            <div className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 w-40 h-3 rounded-full bg-accent/30 blur-2xl" />
-          </div>
-        </div>
-      </motion.div>
 
       {/* Quick Links */}
       <motion.div

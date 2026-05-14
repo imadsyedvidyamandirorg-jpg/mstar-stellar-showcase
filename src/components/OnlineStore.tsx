@@ -121,7 +121,7 @@ const OnlineStore = () => {
               Featured Products
             </h2>
             <p className="text-muted-foreground mt-2">
-              Explore our collection of smartphones and accessories
+              Explore our collection of premium accessories & smart gadgets
             </p>
           </div>
           <Button variant="outline" size="lg">

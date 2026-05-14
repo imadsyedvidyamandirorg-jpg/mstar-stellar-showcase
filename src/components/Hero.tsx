@@ -29,7 +29,7 @@ const Hero = () => {
             </h1>
 
             <p className="text-base md:text-lg text-primary-foreground/70 mb-6 md:mb-8 max-w-xl mx-auto lg:mx-0">
-              Your trusted destination for the latest smartphones and mobile accessories. 
+              Your trusted destination for premium accessories and smart gadgets.
               Stay connected with the best in mobile technology.
             </p>
 

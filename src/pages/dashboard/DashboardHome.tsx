@@ -143,8 +143,8 @@ const DashboardHome = () => {
               className="mt-7 md:mt-9 grid grid-cols-3 max-w-md gap-3 md:gap-4"
             >
               {[
-                { k: "10k+", v: "Happy customers" },
-                { k: "200+", v: "Curated products" },
+                { k: "1L+", v: "Happy customers" },
+                { k: "500+", v: "Curated products" },
                 { k: "4.9★", v: "Avg. rating" },
               ].map((s) => (
                 <div key={s.v} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur px-3 py-2.5">
@@ -174,7 +174,7 @@ const DashboardHome = () => {
             <span className="shrink-0">JBL</span>
             <span className="shrink-0">DJI</span>
             <span className="shrink-0">Realme</span>
-            <span className="flex items-center gap-1.5 shrink-0"><Truck className="h-3.5 w-3.5 text-accent" /> Free Botad delivery</span>
+            <span className="flex items-center gap-1.5 shrink-0"><Truck className="h-3.5 w-3.5 text-accent" /> Pan-India shipping</span>
           </div>
         </div>
       </motion.section>

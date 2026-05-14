@@ -280,7 +280,7 @@ const StorePage = () => {
               Premium accessories,<br className="hidden sm:block" /> handpicked.
             </h1>
             <p className="text-xs md:text-sm text-white/65 mt-2">
-              Free Botad delivery • COD available • 7-day returns
+              Pan-India shipping • COD available • 7-day returns on sealed items
             </p>
           </div>
           <div className="hidden sm:flex flex-col items-end gap-1 text-xs">
@@ -621,7 +621,7 @@ const StorePage = () => {
             { icon: Truck, label: "Fast Delivery", desc: "Ships within 24 hrs" },
             { icon: ShieldCheck, label: "100% Genuine", desc: "Authorized dealer" },
             { icon: RotateCcw, label: "Easy Returns", desc: "7-day replacement" },
-            { icon: Sparkles, label: "Best Prices", desc: "Lowest in Botad" },
+            { icon: Sparkles, label: "Best Prices", desc: "Honest, transparent pricing" },
           ].map((t) => (
             <div key={t.label} className="bg-card border border-border/60 rounded-xl p-3 md:p-4 flex items-center gap-3">
               <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0">

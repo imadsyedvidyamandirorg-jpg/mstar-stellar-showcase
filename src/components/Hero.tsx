@@ -29,7 +29,7 @@ const Hero = () => {
             </h1>
 
             <p className="text-base md:text-lg text-primary-foreground/70 mb-6 md:mb-8 max-w-xl mx-auto lg:mx-0">
-              Your trusted destination for the latest smartphones and mobile accessories. 
+              Your trusted destination for premium accessories and smart gadgets.
               Stay connected with the best in mobile technology.
             </p>
 
@@ -58,7 +58,7 @@ const Hero = () => {
                 <div className="text-xs md:text-sm text-primary-foreground/60">Products</div>
               </div>
               <div className="text-center lg:text-left">
-                <div className="text-xl md:text-2xl lg:text-3xl font-bold text-accent">5K+</div>
+                <div className="text-xl md:text-2xl lg:text-3xl font-bold text-accent">1L+</div>
                 <div className="text-xs md:text-sm text-primary-foreground/60">Happy Customers</div>
               </div>
             </div>

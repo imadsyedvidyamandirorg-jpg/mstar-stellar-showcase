@@ -20,6 +20,10 @@ import ProductPage from "./pages/dashboard/ProductPage";
 import VirtualTourPage from "./pages/dashboard/VirtualTourPage";
 import OrdersPage from "./pages/dashboard/OrdersPage";
 import ScrollToTop from "./components/ScrollToTop";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import RefundPolicy from "./pages/legal/RefundPolicy";
+import ShippingPolicy from "./pages/legal/ShippingPolicy";
+import TermsConditions from "./pages/legal/TermsConditions";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +40,10 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+            <Route path="/shipping-policy" element={<ShippingPolicy />} />
+            <Route path="/terms-and-conditions" element={<TermsConditions />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<DashboardHome />} />
               <Route path="reels" element={<ReelsPage />} />

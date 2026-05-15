@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera, Sparkles, Loader2, ImageIcon, Layers } from "lucide-react";
+import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera, Sparkles, Loader2, ImageIcon, Layers, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "banners" | "notifications" | "alerts" | "analytics" | "panorama";
+type Tab = "products" | "categories" | "orders" | "reels" | "posts" | "offers" | "banners" | "notifications" | "alerts" | "analytics" | "panorama";
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -19,6 +19,7 @@ const AdminPanel = ({ onClose, initialTab = "products" }: AdminPanelProps) => {
 
   const tabs = [
     { id: "products" as Tab, label: "Products", icon: Package },
+    { id: "categories" as Tab, label: "Categories", icon: Tag },
     { id: "orders" as Tab, label: "Orders", icon: ShoppingBag },
     { id: "reels" as Tab, label: "Reels", icon: Film },
     { id: "posts" as Tab, label: "Posts", icon: Image },
@@ -70,6 +71,7 @@ const AdminPanel = ({ onClose, initialTab = "products" }: AdminPanelProps) => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
           {activeTab === "products" && <ProductsManager />}
+          {activeTab === "categories" && <CategoriesManager />}
           {activeTab === "orders" && <OrdersManager />}
           {activeTab === "reels" && <ReelsManager />}
           {activeTab === "posts" && <PostsManager />}

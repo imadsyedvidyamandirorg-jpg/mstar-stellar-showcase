@@ -103,6 +103,19 @@ const ProductsManager = () => {
   });
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<{ slug: string; name: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("slug,name")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      setCategoryOptions(data || []);
+    })();
+  }, []);
 
   const handleGenerateDescription = async () => {
     if (!form.name) {
@@ -159,10 +172,9 @@ const ProductsManager = () => {
     };
 
     if (editingId) {
-      // Upload pending images
+      // Build final image list = remaining existing + newly uploaded
+      let finalImages = [...existingImages];
       if (pendingImages.length > 0) {
-        const product = products.find((p) => p.id === editingId);
-        const existingImages = product?.images || [];
         const uploadedUrls: string[] = [];
         for (const file of pendingImages) {
           const fileExt = file.name.split(".").pop();
@@ -173,8 +185,9 @@ const ProductsManager = () => {
             uploadedUrls.push(urlData.publicUrl);
           }
         }
-        (payload as any).images = [...existingImages, ...uploadedUrls];
+        finalImages = [...finalImages, ...uploadedUrls];
       }
+      (payload as any).images = finalImages;
       await supabase.from("products").update(payload).eq("id", editingId);
       toast({ title: "Product updated!" });
     } else {
@@ -201,6 +214,7 @@ const ProductsManager = () => {
     setForm({ name: "", brand: "", category: "smartphones", description: "", price: "", original_price: "", stock: "0", badge: "", badge_color: "bg-accent", emi_available: false, is_new_arrival: false, is_bestseller: false });
     setPendingImages([]);
     setPreviewUrls([]);
+    setExistingImages([]);
     fetchProducts();
   };
 
@@ -213,11 +227,19 @@ const ProductsManager = () => {
     });
     setEditingId(product.id);
     setShowForm(true);
+    setExistingImages(product.images || []);
+    setPendingImages([]);
+    setPreviewUrls([]);
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("products").update({ is_active: false }).eq("id", id);
-    toast({ title: "Product removed" });
+    if (!window.confirm("Permanently delete this product? This cannot be undone.")) return;
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Product deleted" });
     fetchProducts();
   };
 
@@ -261,9 +283,16 @@ const ProductsManager = () => {
             <Input placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
           </div>
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-            <option value="smartphones">Smartphones</option>
-            <option value="accessories">Accessories</option>
-            <option value="electronics">Electronics</option>
+            {categoryOptions.length === 0 ? (
+              <>
+                <option value="accessories">Accessories</option>
+                <option value="electronics">Electronics</option>
+              </>
+            ) : (
+              categoryOptions.map((c) => (
+                <option key={c.slug} value={c.slug}>{c.name}</option>
+              ))
+            )}
           </select>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -318,6 +347,21 @@ const ProductsManager = () => {
           {/* Image Upload */}
           <div>
             <p className="text-sm font-medium text-foreground mb-2">Product Images</p>
+            {existingImages.length > 0 && (
+              <div className="flex gap-2 mb-2 flex-wrap">
+                {existingImages.map((url, i) => (
+                  <div key={`ex-${i}`} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setExistingImages((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-destructive rounded-full flex items-center justify-center text-white text-[10px]"
+                      title="Remove image"
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
             <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-background border border-input rounded-md text-sm hover:bg-muted transition-colors">
               <Image className="h-4 w-4" /> Choose Images
               <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {

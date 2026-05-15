@@ -1132,6 +1132,181 @@ const AnalyticsDashboard = () => {
 
 export default AdminPanel;
 
+// ==================== CATEGORIES MANAGER ====================
+const CategoriesManager = () => {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", slug: "", image_url: "", sort_order: "0", is_active: true });
+  const [showForm, setShowForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("categories").select("*").order("sort_order", { ascending: true });
+    setCategories(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchCategories(); }, []);
+
+  const slugify = (s: string) =>
+    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+  const resetForm = () => {
+    setForm({ name: "", slug: "", image_url: "", sort_order: "0", is_active: true });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleUploadImage = async (file: File) => {
+    setUploading(true);
+    const safe = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `categories/${Date.now()}-${safe}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file, { contentType: file.type });
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+    setForm((f) => ({ ...f, image_url: urlData.publicUrl }));
+    setUploading(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name.trim()) {
+      toast({ title: "Name is required", variant: "destructive" });
+      return;
+    }
+    const payload = {
+      name: form.name.trim(),
+      slug: (form.slug || slugify(form.name)).trim(),
+      image_url: form.image_url || null,
+      sort_order: Number(form.sort_order) || 0,
+      is_active: form.is_active,
+    };
+    if (editingId) {
+      const { error } = await supabase.from("categories").update(payload).eq("id", editingId);
+      if (error) {
+        toast({ title: "Update failed", description: error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: "Category updated" });
+    } else {
+      const { error } = await supabase.from("categories").insert(payload);
+      if (error) {
+        toast({ title: "Create failed", description: error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: "Category created" });
+    }
+    resetForm();
+    fetchCategories();
+  };
+
+  const handleEdit = (c: any) => {
+    setForm({
+      name: c.name,
+      slug: c.slug,
+      image_url: c.image_url || "",
+      sort_order: String(c.sort_order ?? 0),
+      is_active: c.is_active ?? true,
+    });
+    setEditingId(c.id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Delete this category permanently?")) return;
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Category deleted" });
+    fetchCategories();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-foreground">Categories ({categories.length})</h3>
+          <p className="text-xs text-muted-foreground">These appear on the dashboard category strip and product form.</p>
+        </div>
+        <Button size="sm" onClick={() => { resetForm(); setShowForm(true); }}>
+          <Plus className="h-4 w-4 mr-1" /> Add Category
+        </Button>
+      </div>
+
+      {showForm && (
+        <div className="bg-muted rounded-xl p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Input placeholder="Display name (e.g., Earbuds) *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: form.slug || slugify(e.target.value) })} />
+            <Input placeholder="Slug (auto)" value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3 items-center">
+            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-background border border-input rounded-md text-sm hover:bg-muted transition-colors">
+              <ImageIcon className="h-4 w-4" />
+              {uploading ? "Uploading..." : form.image_url ? "Replace Image" : "Upload Image"}
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUploadImage(e.target.files[0]); }} />
+            </label>
+            <Input placeholder="Sort order" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
+          </div>
+          {form.image_url && (
+            <div className="flex items-center gap-2">
+              <img src={form.image_url} alt="" className="w-14 h-14 rounded-lg object-cover border border-border" />
+              <button type="button" onClick={() => setForm({ ...form, image_url: "" })} className="text-xs text-destructive hover:underline">Remove image</button>
+            </div>
+          )}
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+            Active (visible on site)
+          </label>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleSubmit}>{editingId ? "Update" : "Create"} Category</Button>
+            <Button size="sm" variant="outline" onClick={resetForm}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-muted-foreground text-sm">Loading...</p>
+      ) : categories.length === 0 ? (
+        <p className="text-muted-foreground text-sm text-center py-8">No categories yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {categories.map((c) => (
+            <div key={c.id} className="flex items-center gap-3 bg-muted rounded-xl p-3">
+              <div className="w-12 h-12 rounded-lg bg-background overflow-hidden flex-shrink-0">
+                {c.image_url ? (
+                  <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <Tag className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground text-sm">{c.name}</p>
+                <p className="text-xs text-muted-foreground">/{c.slug} · order {c.sort_order} · {c.is_active ? "active" : "hidden"}</p>
+              </div>
+              <button onClick={() => handleEdit(c)} className="p-2 hover:bg-background rounded-lg" title="Edit">
+                <Edit className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <button onClick={() => handleDelete(c.id)} className="p-2 hover:bg-background rounded-lg" title="Delete">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ==================== PANORAMA MANAGER ====================
 const PanoramaManager = () => {
   const [panoramas, setPanoramas] = useState<any[]>([]);

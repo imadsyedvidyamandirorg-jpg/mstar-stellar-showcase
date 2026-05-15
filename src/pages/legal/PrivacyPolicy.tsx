@@ -62,8 +62,8 @@ const PrivacyPolicy = () => (
     <h2>8. Contact Us</h2>
     <p>
       For any privacy-related questions, write to us at <a href="mailto:mstarmobile77@gmail.com" className="text-accent">mstarmobile77@gmail.com</a> or
-      visit our store at R.D Complex, Opp. Sukhadia Sweet Mart, Near Janta Kachori, Moti Bazar,
-      Palanpur — 385001, Gujarat, India.
+      visit our store at R.D Complex, Moti Bazaar Rd, opp. Sukhadia Sweet Mart, near Janta Kachori,
+      Palliviya Nagar, Parshvanath Nagar, Palanpur, Gujarat 385001 — phone +91 80002 96786.
     </p>
   </LegalLayout>
 );

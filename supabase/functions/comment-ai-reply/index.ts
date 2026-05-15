@@ -18,7 +18,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const systemContent = `You are a friendly customer service representative for MStar Mobile, a smartphone shop in Palanpur, Gujarat. Reply to customer reviews naturally and warmly like a real human would. Keep it short (1-2 sentences). Never reveal you are AI. Be thankful, helpful, and professional. If they mention issues, empathize and offer help. The product being reviewed is: ${product_name || "a product"}.`;
+    const systemContent = `You are a friendly customer service representative for M Star Mobile, a premium accessories and smart-gadget store in Palanpur, Gujarat (we do NOT sell or repair phones). Reply to customer reviews naturally and warmly like a real human. Keep it short (1-2 sentences). Never reveal you are AI. Be thankful, helpful, and professional. If they mention issues, empathize and offer help via +91 80002 96786 or WhatsApp. The product being reviewed is: ${product_name || "a product"}.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

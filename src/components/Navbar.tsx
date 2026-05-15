@@ -3,6 +3,7 @@ import { Menu, X, Phone, MapPin, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import mstarLogo from "@/assets/mstar-logo.png";
+import { BUSINESS } from "@/lib/contact";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,7 +22,7 @@ const Navbar = () => {
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2">
               <Phone className="h-3 w-3 text-accent" />
-              080002 96786
+              {BUSINESS.phoneDisplay}
             </span>
             <span className="flex items-center gap-2">
               <Clock className="h-3 w-3 text-accent" />
@@ -30,7 +31,7 @@ const Navbar = () => {
           </div>
           <span className="flex items-center gap-2">
             <MapPin className="h-3 w-3 text-accent" />
-            Moti Bazaar Rd, Palanpur, Gujarat
+            Moti Bazaar Rd, Palliviya Nagar, Palanpur
           </span>
         </div>
       </div>
@@ -99,7 +100,7 @@ const Navbar = () => {
               <div className="mt-4 pt-4 border-t border-mstar-gray/20 space-y-2 text-sm text-primary-foreground/60">
                 <p className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-accent" />
-                  080002 96786
+                  {BUSINESS.phoneDisplay}
                 </p>
                 <p className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-accent" />

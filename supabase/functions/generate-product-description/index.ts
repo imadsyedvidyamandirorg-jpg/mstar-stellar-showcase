@@ -19,7 +19,7 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are an expert product copywriter for MStar Mobile, a smartphone shop in Palanpur, Gujarat, India.
+    const systemPrompt = `You are an expert product copywriter for M Star Mobile, a premium accessories and smart-gadget store in Palanpur, Gujarat, India (we do NOT sell phones — focus on the actual product).
 Write compelling, clear product descriptions in English suitable for an Indian audience.
 Use markdown formatting:
 - Start with a 1-2 sentence engaging hook

@@ -43,8 +43,8 @@ serve(async (req) => {
 
 Shop Details:
 - Name: M Star Mobile
-- Address: R.D Complex, Opp. Sukhadia Sweet Mart, Near Janta Kachori, Moti Bazar, Palanpur — 385001, Gujarat, India
-- Phone / WhatsApp: +91 93271 88556
+- Address: R.D Complex, Moti Bazaar Rd, opp. Sukhadia Sweet Mart, near Janta Kachori, Palliviya Nagar, Parshvanath Nagar, Palanpur, Gujarat 385001
+- Phone / WhatsApp: +91 80002 96786
 - Email: mstarmobile77@gmail.com
 - Instagram: @mstar_mobile · Facebook: mstarmobile7777 · YouTube: @mstar_mobile · Telegram: t.me/mstarmobile
 - Hours: Mon–Sun, 10:00 AM – 9:00 PM

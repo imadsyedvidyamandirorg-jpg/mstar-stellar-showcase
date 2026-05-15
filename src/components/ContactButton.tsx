@@ -1,5 +1,6 @@
 import { Phone, Mail, MessageCircle, MapPin, X } from "lucide-react";
 import { useState } from "react";
+import { BUSINESS, MAPS_LINK } from "@/lib/contact";
 
 const ContactButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,29 +9,29 @@ const ContactButton = () => {
     {
       icon: Phone,
       label: "Call Us",
-      value: "080002 96786",
-      href: "tel:08000296786",
+      value: BUSINESS.phoneDisplay,
+      href: `tel:${BUSINESS.phoneTel}`,
       color: "bg-green-500 hover:bg-green-600",
     },
     {
       icon: MessageCircle,
       label: "WhatsApp",
-      value: "+91 8888 0808 46",
-      href: "https://wa.me/918888080846",
+      value: BUSINESS.phoneDisplay,
+      href: BUSINESS.whatsapp,
       color: "bg-emerald-500 hover:bg-emerald-600",
     },
     {
       icon: Mail,
       label: "Email",
-      value: "mstarmobile77@gmail.com",
-      href: "mailto:mstarmobile77@gmail.com",
+      value: BUSINESS.email,
+      href: `mailto:${BUSINESS.email}`,
       color: "bg-blue-500 hover:bg-blue-600",
     },
     {
       icon: MapPin,
       label: "Visit Store",
       value: "Get Directions",
-      href: "https://maps.google.com/?q=R.D+Complex,+Moti+Bazaar+Rd,+Palanpur,+Gujarat+385001",
+      href: MAPS_LINK,
       color: "bg-accent hover:bg-accent/90",
     },
   ];

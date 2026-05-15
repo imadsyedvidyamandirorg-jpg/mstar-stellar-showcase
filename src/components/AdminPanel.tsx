@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera, Sparkles, Loader2, ImageIcon, Layers } from "lucide-react";
+import { X, Package, Plus, Trash2, Edit, ShoppingBag, Image, Film, Gift, Users, Bell, Volume2, VolumeX, AlertTriangle, Send, BarChart3, Eye, TrendingUp, Camera, Sparkles, Loader2, ImageIcon, Layers, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "products" | "orders" | "reels" | "posts" | "offers" | "banners" | "notifications" | "alerts" | "analytics" | "panorama";
+type Tab = "products" | "categories" | "orders" | "reels" | "posts" | "offers" | "banners" | "notifications" | "alerts" | "analytics" | "panorama";
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -19,6 +19,7 @@ const AdminPanel = ({ onClose, initialTab = "products" }: AdminPanelProps) => {
 
   const tabs = [
     { id: "products" as Tab, label: "Products", icon: Package },
+    { id: "categories" as Tab, label: "Categories", icon: Tag },
     { id: "orders" as Tab, label: "Orders", icon: ShoppingBag },
     { id: "reels" as Tab, label: "Reels", icon: Film },
     { id: "posts" as Tab, label: "Posts", icon: Image },
@@ -70,6 +71,7 @@ const AdminPanel = ({ onClose, initialTab = "products" }: AdminPanelProps) => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
           {activeTab === "products" && <ProductsManager />}
+          {activeTab === "categories" && <CategoriesManager />}
           {activeTab === "orders" && <OrdersManager />}
           {activeTab === "reels" && <ReelsManager />}
           {activeTab === "posts" && <PostsManager />}
@@ -101,6 +103,19 @@ const ProductsManager = () => {
   });
   const [pendingImages, setPendingImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<{ slug: string; name: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("slug,name")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      setCategoryOptions(data || []);
+    })();
+  }, []);
 
   const handleGenerateDescription = async () => {
     if (!form.name) {
@@ -157,10 +172,9 @@ const ProductsManager = () => {
     };
 
     if (editingId) {
-      // Upload pending images
+      // Build final image list = remaining existing + newly uploaded
+      let finalImages = [...existingImages];
       if (pendingImages.length > 0) {
-        const product = products.find((p) => p.id === editingId);
-        const existingImages = product?.images || [];
         const uploadedUrls: string[] = [];
         for (const file of pendingImages) {
           const fileExt = file.name.split(".").pop();
@@ -171,8 +185,9 @@ const ProductsManager = () => {
             uploadedUrls.push(urlData.publicUrl);
           }
         }
-        (payload as any).images = [...existingImages, ...uploadedUrls];
+        finalImages = [...finalImages, ...uploadedUrls];
       }
+      (payload as any).images = finalImages;
       await supabase.from("products").update(payload).eq("id", editingId);
       toast({ title: "Product updated!" });
     } else {
@@ -199,6 +214,7 @@ const ProductsManager = () => {
     setForm({ name: "", brand: "", category: "smartphones", description: "", price: "", original_price: "", stock: "0", badge: "", badge_color: "bg-accent", emi_available: false, is_new_arrival: false, is_bestseller: false });
     setPendingImages([]);
     setPreviewUrls([]);
+    setExistingImages([]);
     fetchProducts();
   };
 
@@ -211,11 +227,19 @@ const ProductsManager = () => {
     });
     setEditingId(product.id);
     setShowForm(true);
+    setExistingImages(product.images || []);
+    setPendingImages([]);
+    setPreviewUrls([]);
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("products").update({ is_active: false }).eq("id", id);
-    toast({ title: "Product removed" });
+    if (!window.confirm("Permanently delete this product? This cannot be undone.")) return;
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Product deleted" });
     fetchProducts();
   };
 
@@ -259,9 +283,16 @@ const ProductsManager = () => {
             <Input placeholder="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
           </div>
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-            <option value="smartphones">Smartphones</option>
-            <option value="accessories">Accessories</option>
-            <option value="electronics">Electronics</option>
+            {categoryOptions.length === 0 ? (
+              <>
+                <option value="accessories">Accessories</option>
+                <option value="electronics">Electronics</option>
+              </>
+            ) : (
+              categoryOptions.map((c) => (
+                <option key={c.slug} value={c.slug}>{c.name}</option>
+              ))
+            )}
           </select>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -316,6 +347,21 @@ const ProductsManager = () => {
           {/* Image Upload */}
           <div>
             <p className="text-sm font-medium text-foreground mb-2">Product Images</p>
+            {existingImages.length > 0 && (
+              <div className="flex gap-2 mb-2 flex-wrap">
+                {existingImages.map((url, i) => (
+                  <div key={`ex-${i}`} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setExistingImages((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 bg-destructive rounded-full flex items-center justify-center text-white text-[10px]"
+                      title="Remove image"
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
             <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-background border border-input rounded-md text-sm hover:bg-muted transition-colors">
               <Image className="h-4 w-4" /> Choose Images
               <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
@@ -564,8 +610,13 @@ const ReelsManager = () => {
   };
 
   const deleteReel = async (id: string) => {
-    await supabase.from("reels").update({ is_active: false }).eq("id", id);
-    toast({ title: "Reel removed" });
+    if (!window.confirm("Permanently delete this reel?")) return;
+    const { error } = await supabase.from("reels").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Reel deleted" });
     fetchReels();
   };
 
@@ -676,8 +727,13 @@ const PostsManager = () => {
   };
 
   const deletePost = async (id: string) => {
-    await supabase.from("posts").update({ is_active: false }).eq("id", id);
-    toast({ title: "Post removed" });
+    if (!window.confirm("Permanently delete this post?")) return;
+    const { error } = await supabase.from("posts").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Post deleted" });
     fetchPosts();
   };
 
@@ -744,8 +800,13 @@ const OffersManager = () => {
   };
 
   const deleteOffer = async (id: string) => {
-    await supabase.from("offers").update({ is_active: false }).eq("id", id);
-    toast({ title: "Offer removed" });
+    if (!window.confirm("Permanently delete this offer?")) return;
+    const { error } = await supabase.from("offers").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Offer deleted" });
     fetchOffers();
   };
 
@@ -1071,6 +1132,181 @@ const AnalyticsDashboard = () => {
 
 export default AdminPanel;
 
+// ==================== CATEGORIES MANAGER ====================
+const CategoriesManager = () => {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", slug: "", image_url: "", sort_order: "0", is_active: true });
+  const [showForm, setShowForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("categories").select("*").order("sort_order", { ascending: true });
+    setCategories(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchCategories(); }, []);
+
+  const slugify = (s: string) =>
+    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+  const resetForm = () => {
+    setForm({ name: "", slug: "", image_url: "", sort_order: "0", is_active: true });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleUploadImage = async (file: File) => {
+    setUploading(true);
+    const safe = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `categories/${Date.now()}-${safe}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file, { contentType: file.type });
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+    setForm((f) => ({ ...f, image_url: urlData.publicUrl }));
+    setUploading(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name.trim()) {
+      toast({ title: "Name is required", variant: "destructive" });
+      return;
+    }
+    const payload = {
+      name: form.name.trim(),
+      slug: (form.slug || slugify(form.name)).trim(),
+      image_url: form.image_url || null,
+      sort_order: Number(form.sort_order) || 0,
+      is_active: form.is_active,
+    };
+    if (editingId) {
+      const { error } = await supabase.from("categories").update(payload).eq("id", editingId);
+      if (error) {
+        toast({ title: "Update failed", description: error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: "Category updated" });
+    } else {
+      const { error } = await supabase.from("categories").insert(payload);
+      if (error) {
+        toast({ title: "Create failed", description: error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: "Category created" });
+    }
+    resetForm();
+    fetchCategories();
+  };
+
+  const handleEdit = (c: any) => {
+    setForm({
+      name: c.name,
+      slug: c.slug,
+      image_url: c.image_url || "",
+      sort_order: String(c.sort_order ?? 0),
+      is_active: c.is_active ?? true,
+    });
+    setEditingId(c.id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Delete this category permanently?")) return;
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Category deleted" });
+    fetchCategories();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-foreground">Categories ({categories.length})</h3>
+          <p className="text-xs text-muted-foreground">These appear on the dashboard category strip and product form.</p>
+        </div>
+        <Button size="sm" onClick={() => { resetForm(); setShowForm(true); }}>
+          <Plus className="h-4 w-4 mr-1" /> Add Category
+        </Button>
+      </div>
+
+      {showForm && (
+        <div className="bg-muted rounded-xl p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Input placeholder="Display name (e.g., Earbuds) *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value, slug: form.slug || slugify(e.target.value) })} />
+            <Input placeholder="Slug (auto)" value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3 items-center">
+            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-background border border-input rounded-md text-sm hover:bg-muted transition-colors">
+              <ImageIcon className="h-4 w-4" />
+              {uploading ? "Uploading..." : form.image_url ? "Replace Image" : "Upload Image"}
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleUploadImage(e.target.files[0]); }} />
+            </label>
+            <Input placeholder="Sort order" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
+          </div>
+          {form.image_url && (
+            <div className="flex items-center gap-2">
+              <img src={form.image_url} alt="" className="w-14 h-14 rounded-lg object-cover border border-border" />
+              <button type="button" onClick={() => setForm({ ...form, image_url: "" })} className="text-xs text-destructive hover:underline">Remove image</button>
+            </div>
+          )}
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+            Active (visible on site)
+          </label>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleSubmit}>{editingId ? "Update" : "Create"} Category</Button>
+            <Button size="sm" variant="outline" onClick={resetForm}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-muted-foreground text-sm">Loading...</p>
+      ) : categories.length === 0 ? (
+        <p className="text-muted-foreground text-sm text-center py-8">No categories yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {categories.map((c) => (
+            <div key={c.id} className="flex items-center gap-3 bg-muted rounded-xl p-3">
+              <div className="w-12 h-12 rounded-lg bg-background overflow-hidden flex-shrink-0">
+                {c.image_url ? (
+                  <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <Tag className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground text-sm">{c.name}</p>
+                <p className="text-xs text-muted-foreground">/{c.slug} · order {c.sort_order} · {c.is_active ? "active" : "hidden"}</p>
+              </div>
+              <button onClick={() => handleEdit(c)} className="p-2 hover:bg-background rounded-lg" title="Edit">
+                <Edit className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <button onClick={() => handleDelete(c.id)} className="p-2 hover:bg-background rounded-lg" title="Delete">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ==================== PANORAMA MANAGER ====================
 const PanoramaManager = () => {
   const [panoramas, setPanoramas] = useState<any[]>([]);
@@ -1115,8 +1351,13 @@ const PanoramaManager = () => {
   };
 
   const deletePanorama = async (id: string) => {
-    await supabase.from("panoramas").update({ is_active: false }).eq("id", id);
-    toast({ title: "Panorama removed" });
+    if (!window.confirm("Permanently delete this panorama?")) return;
+    const { error } = await supabase.from("panoramas").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Panorama deleted" });
     fetchPanoramas();
   };
 

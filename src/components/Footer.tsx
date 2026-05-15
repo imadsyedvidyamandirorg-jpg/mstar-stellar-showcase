@@ -1,18 +1,16 @@
 import { Instagram, Phone, Mail, MapPin, Facebook, Youtube, Send, MessageCircle, Clock, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import mstarLogo from "@/assets/mstar-logo.png";
+import { BUSINESS, MAPS_LINK, MAPS_EMBED } from "@/lib/contact";
 
 interface FooterProps {
   showMap?: boolean;
 }
 
-const ADDRESS_FULL = "R.D Complex, Opp. Sukhadia Sweet Mart, Near Janta Kachori, Moti Bazar, Palanpur — 385001, Gujarat, India";
-const MAPS_QUERY = encodeURIComponent("M Star Mobile, R.D Complex, Moti Bazar, Palanpur, Gujarat 385001");
-const MAPS_LINK = `https://www.google.com/maps/search/?api=1&query=${MAPS_QUERY}`;
-const MAPS_EMBED = `https://maps.google.com/maps?q=${MAPS_QUERY}&t=m&z=16&output=embed&iwloc=near`;
-const PHONE = "+919327188556";
-const WHATSAPP = "https://wa.me/919327188556";
-const EMAIL = "mstarmobile77@gmail.com";
+const ADDRESS_FULL = BUSINESS.address;
+const PHONE = BUSINESS.phoneTel;
+const WHATSAPP = BUSINESS.whatsapp;
+const EMAIL = BUSINESS.email;
 
 const Footer = ({ showMap = false }: FooterProps) => {
   const policyLinks = [
@@ -30,10 +28,10 @@ const Footer = ({ showMap = false }: FooterProps) => {
   ];
 
   const socials = [
-    { Icon: Instagram, href: "https://www.instagram.com/mstar_mobile", label: "Instagram" },
-    { Icon: Facebook, href: "https://www.facebook.com/mstarmobile7777/", label: "Facebook" },
-    { Icon: Youtube, href: "https://www.youtube.com/@mstar_mobile", label: "YouTube" },
-    { Icon: Send, href: "https://t.me/mstarmobile", label: "Telegram" },
+    { Icon: Instagram, href: BUSINESS.socials.instagram, label: "Instagram" },
+    { Icon: Facebook, href: BUSINESS.socials.facebook, label: "Facebook" },
+    { Icon: Youtube, href: BUSINESS.socials.youtube, label: "YouTube" },
+    { Icon: Send, href: BUSINESS.socials.telegram, label: "Telegram" },
     { Icon: MessageCircle, href: WHATSAPP, label: "WhatsApp" },
     { Icon: Mail, href: `mailto:${EMAIL}`, label: "Email" },
   ];
@@ -104,7 +102,7 @@ const Footer = ({ showMap = false }: FooterProps) => {
               <li className="flex items-center gap-2 md:gap-3">
                 <Phone className="h-4 w-4 md:h-5 md:w-5 text-accent flex-shrink-0" />
                 <a href={`tel:${PHONE}`} className="text-primary-foreground/70 hover:text-accent text-xs md:text-sm">
-                  +91 93271 88556
+                  {BUSINESS.phoneDisplay}
                 </a>
               </li>
               <li className="flex items-center gap-2 md:gap-3">
@@ -115,7 +113,7 @@ const Footer = ({ showMap = false }: FooterProps) => {
               </li>
               <li className="flex items-center gap-2 md:gap-3">
                 <Clock className="h-4 w-4 md:h-5 md:w-5 text-accent flex-shrink-0" />
-                <span className="text-primary-foreground/70 text-xs md:text-sm">Mon – Sun · 10 AM – 9 PM</span>
+                <span className="text-primary-foreground/70 text-xs md:text-sm">{BUSINESS.hours}</span>
               </li>
             </ul>
           </div>

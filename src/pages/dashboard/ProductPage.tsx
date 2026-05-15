@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Heart, Send, Loader2, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Heart, Send, Loader2, Star, ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -111,18 +112,21 @@ const ProductPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
         {/* Images */}
         <div className="space-y-3">
-          <div className="relative aspect-square bg-card rounded-2xl overflow-hidden">
-            <img src={images[activeImage]} alt={product.name} className="w-full h-full object-cover" />
+          <div className="relative aspect-square bg-card rounded-2xl overflow-hidden group cursor-zoom-in" onClick={() => setLightbox(true)}>
+            <img src={images[activeImage]} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            <div className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/50 backdrop-blur text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <ZoomIn className="h-4 w-4" />
+            </div>
             {images.length > 1 && (
               <>
                 <button
-                  onClick={() => setActiveImage((prev) => (prev - 1 + images.length) % images.length)}
+                  onClick={(e) => { e.stopPropagation(); setActiveImage((prev) => (prev - 1 + images.length) % images.length); }}
                   className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => setActiveImage((prev) => (prev + 1) % images.length)}
+                  onClick={(e) => { e.stopPropagation(); setActiveImage((prev) => (prev + 1) % images.length); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -253,6 +257,38 @@ const ProductPage = () => {
           </div>
         )}
       </div>
+
+      {/* Fullscreen lightbox */}
+      {lightbox && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4" onClick={() => setLightbox(false)}>
+          <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center" onClick={() => setLightbox(false)}>
+            <X className="h-5 w-5" />
+          </button>
+          {images.length > 1 && (
+            <>
+              <button onClick={(e) => { e.stopPropagation(); setActiveImage((p) => (p - 1 + images.length) % images.length); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center">
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setActiveImage((p) => (p + 1) % images.length); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center">
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </>
+          )}
+          <img
+            src={images[activeImage]}
+            alt={product.name}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg"
+          />
+          {images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 px-3 py-2 rounded-full" onClick={(e) => e.stopPropagation()}>
+              {images.map((_: string, i: number) => (
+                <button key={i} onClick={() => setActiveImage(i)} className={`w-2 h-2 rounded-full transition-all ${activeImage === i ? "bg-white w-6" : "bg-white/40"}`} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

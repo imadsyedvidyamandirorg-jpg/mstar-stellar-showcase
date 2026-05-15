@@ -4,15 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { BUSINESS, MAPS_LINK, MAPS_EMBED } from "@/lib/contact";
 
-const ADDRESS = "R.D Complex, Opp. Sukhadia Sweet Mart, Near Janta Kachori, Moti Bazar, Palanpur — 385001, Gujarat, India";
-const PHONE_DISPLAY = "+91 93271 88556";
-const PHONE_TEL = "+919327188556";
-const WHATSAPP = "https://wa.me/919327188556";
-const EMAIL = "mstarmobile77@gmail.com";
-const MAPS_QUERY = encodeURIComponent("M Star Mobile, R.D Complex, Moti Bazar, Palanpur, Gujarat 385001");
-const MAPS_LINK = `https://www.google.com/maps/search/?api=1&query=${MAPS_QUERY}`;
-const MAPS_EMBED = `https://maps.google.com/maps?q=${MAPS_QUERY}&t=m&z=16&output=embed&iwloc=near`;
+const ADDRESS = BUSINESS.address;
+const PHONE_DISPLAY = BUSINESS.phoneDisplay;
+const PHONE_TEL = BUSINESS.phoneTel;
+const WHATSAPP = BUSINESS.whatsapp;
+const EMAIL = BUSINESS.email;
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name required").max(100),
@@ -31,14 +29,14 @@ const Contact = () => {
       toast({ title: "Please check the form", description: parsed.error.issues[0]?.message, variant: "destructive" });
       return;
     }
-    const text = `Hi M Star Mobile,%0A%0AName: ${encodeURIComponent(parsed.data.name)}%0APhone: ${encodeURIComponent(parsed.data.phone)}%0A%0A${encodeURIComponent(parsed.data.message)}`;
+      const text = `Hi M Star Mobile,%0A%0AName: ${encodeURIComponent(parsed.data.name)}%0APhone: ${encodeURIComponent(parsed.data.phone)}%0A%0A${encodeURIComponent(parsed.data.message)}`;
     window.open(`${WHATSAPP}?text=${text}`, "_blank", "noopener,noreferrer");
   };
 
   const info = [
     { icon: MapPin, title: "Visit Us", lines: [ADDRESS] },
     { icon: Phone, title: "Call / WhatsApp", lines: [PHONE_DISPLAY] },
-    { icon: Clock, title: "Hours", lines: ["Mon – Sun · 10 AM – 9 PM"] },
+    { icon: Clock, title: "Hours", lines: [BUSINESS.hours] },
     { icon: Mail, title: "Email", lines: [EMAIL] },
   ];
 

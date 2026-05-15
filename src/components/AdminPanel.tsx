@@ -610,8 +610,13 @@ const ReelsManager = () => {
   };
 
   const deleteReel = async (id: string) => {
-    await supabase.from("reels").update({ is_active: false }).eq("id", id);
-    toast({ title: "Reel removed" });
+    if (!window.confirm("Permanently delete this reel?")) return;
+    const { error } = await supabase.from("reels").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Reel deleted" });
     fetchReels();
   };
 
@@ -722,8 +727,13 @@ const PostsManager = () => {
   };
 
   const deletePost = async (id: string) => {
-    await supabase.from("posts").update({ is_active: false }).eq("id", id);
-    toast({ title: "Post removed" });
+    if (!window.confirm("Permanently delete this post?")) return;
+    const { error } = await supabase.from("posts").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Post deleted" });
     fetchPosts();
   };
 
@@ -790,8 +800,13 @@ const OffersManager = () => {
   };
 
   const deleteOffer = async (id: string) => {
-    await supabase.from("offers").update({ is_active: false }).eq("id", id);
-    toast({ title: "Offer removed" });
+    if (!window.confirm("Permanently delete this offer?")) return;
+    const { error } = await supabase.from("offers").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Offer deleted" });
     fetchOffers();
   };
 
@@ -1161,8 +1176,13 @@ const PanoramaManager = () => {
   };
 
   const deletePanorama = async (id: string) => {
-    await supabase.from("panoramas").update({ is_active: false }).eq("id", id);
-    toast({ title: "Panorama removed" });
+    if (!window.confirm("Permanently delete this panorama?")) return;
+    const { error } = await supabase.from("panoramas").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Panorama deleted" });
     fetchPanoramas();
   };
 
